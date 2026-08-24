@@ -4,15 +4,17 @@ Stages:
     1. Ingestion: read input/ documents, chunk them, persist to project_state/.
     2. Retrieval: load chunks and make the keyword search layer available.
     3. Outline generation: build the report structure via LLM.
-    4. (TODO) Section generation: write each section with LLM + retrieval.
-    5. (TODO) Export: convert the report to DOCX in output/.
+    4. Section generation: write each section with LLM + retrieval.
+    5. AI Quality Review: run the QC reviewer over the generated sections.
+    6. Revision loop: fix HIGH severity issues by regenerating sections.
+    7. Document assembly: export the report to DOCX in output/.
 """
 
 import logging
 import sys
 
 from src import ingestion, retrieval
-from src.utils import load_env
+from src.utils import load_env, load_json
 
 
 def setup_logging() -> None:
@@ -58,11 +60,59 @@ def main() -> int:
     for section in outline['outline']:
         logging.info(f"  {section['section_number']}. {section['title']}")
 
-    # --- Stage 4: (TODO) Section generation ---------------------------------
-    # log.info("Stage 4: Section generation - coming next")
+    # --- Stage 4: Section Generation -----------------------------------------
+    logging.info("Stage 4: Section Generation")
+    from src.section_generator import SectionGenerator
 
-    # --- Stage 5: (TODO) Export to DOCX -------------------------------------
-    # log.info("Stage 5: Export pending")
+    # Загружаем chunks
+    all_chunks = load_json("project_state/chunks.json")
+
+    # Загружаем methodology
+    with open("input/methodology.md", "r", encoding="utf-8") as f:
+        methodology_text = f.read()
+
+    # Генерируем все разделы
+    generator = SectionGenerator(client)
+    sections = generator.generate_all_sections(outline, all_chunks, methodology_text)
+
+    logging.info(f"Generated {len(sections)} sections")
+
+    # --- Stage 5: AI Quality Review -----------------------------------------
+    logging.info("Stage 5: AI Quality Review")
+    from src.qc_reviewer import QCReviewer
+
+    qc_reviewer = QCReviewer(client)
+    qc_report = qc_reviewer.review_sections(sections, outline, methodology_text)
+
+    logging.info(f"QC found {len(qc_report['issues'])} issues")
+    logging.info(f"  HIGH: {sum(1 for i in qc_report['issues'] if i['severity'] == 'HIGH')}")
+    logging.info(f"  MEDIUM: {sum(1 for i in qc_report['issues'] if i['severity'] == 'MEDIUM')}")
+    logging.info(f"  LOW: {sum(1 for i in qc_report['issues'] if i['severity'] == 'LOW')}")
+    logging.info(f"Overall Score: {qc_report['overall_score']}/100")
+
+    # --- Stage 6: Revision Loop (if HIGH issues found) ----------------------
+    high_issues = qc_reviewer.get_high_severity_issues(qc_report)
+    if high_issues:
+        logging.info(f"Stage 6: Revision Loop - fixing {len(high_issues)} HIGH issues")
+        from src.revision_loop import RevisionLoop
+
+        revision_loop = RevisionLoop(client, all_chunks, methodology_text)
+        sections = revision_loop.fix_sections(sections, outline, high_issues)
+        logging.info("Revision complete. Sections updated.")
+    else:
+        logging.info("Stage 6: No HIGH issues found. Skipping revision.")
+
+    # --- Stage 7: Document Assembly ------------------------------------------
+    logging.info("Stage 7: Document Assembly")
+    from src.document_assembler import DocumentAssembler
+
+    assembler = DocumentAssembler()
+    doc_path = assembler.assemble_document(sections, outline, qc_report)
+    qc_report_path = assembler.generate_quality_report(qc_report)
+
+    logging.info(f"Final report saved to: {doc_path}")
+    logging.info(f"QC report saved to: {qc_report_path}")
+    logging.info("Pipeline completed successfully!")
 
     return 0
 

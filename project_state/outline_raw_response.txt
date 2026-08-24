@@ -3,65 +3,65 @@
     {
       "section_number": 1,
       "title": "Executive Summary",
-      "description": "A concise summary of the market opportunity, key findings, and strategic recommendations for the board of directors.",
+      "description": "A concise summary of the market opportunity, key findings, and top-level recommendations for entering the Southeast Asian EdTech market, tailored for C-level executives.",
       "key_points": [
-        "Market size of $9.8B in 2024, projected to reach $12.4B in 2025 (26% YoY growth), with a CAGR of 19.5% through 2029.",
-        "Indonesia, Vietnam, and the Philippines are the largest revenue markets, with Indonesia leading at $3.1B.",
-        "Mobile-first approach is essential as over 70% of users access platforms exclusively via mobile devices.",
-        "AI integration is a key differentiator, with AI-featured products growing from 12% (2023) to 35% (2025).",
-        "Recommend a phased entry starting with Indonesia and Vietnam, focusing on K-12 and language learning segments."
+        "Market size of $9.8B in 2024, projected to reach $12.4B in 2025 (26% YoY growth) with a CAGR of 19.5% through 2029.",
+        "Indonesia, Vietnam, and the Philippines are the largest revenue markets, presenting primary entry opportunities.",
+        "Mobile-first approach is critical, as over 70% of users access platforms exclusively via mobile devices.",
+        "Recommend a phased entry strategy focusing on high-growth segments (K-12, language learning) and leveraging AI-driven personalization.",
+        "Key risks include regulatory fragmentation, cultural adaptation needs, and intense competition in the K-12 segment."
       ],
       "estimated_length": "0.5-1 page"
     },
     {
       "section_number": 2,
       "title": "Market Overview",
-      "description": "Detailed analysis of the EdTech market size, growth forecasts, and segment breakdown in Southeast Asia.",
+      "description": "Detailed analysis of the Southeast Asian EdTech market size, growth forecasts, segment breakdown, and key trends shaping the industry.",
       "key_points": [
-        "Total market size: $9.8B in 2024, projected $12.4B in 2025, with a CAGR of 19.5% (2024-2029).",
-        "Country breakdown: Indonesia ($3.1B), Vietnam ($2.0B), Philippines ($1.7B), Thailand ($1.4B), Malaysia ($1.2B).",
-        "Segment distribution: K-12 (38%), Higher education (27%), Language learning (18%), Corporate/upskilling (12%), Test preparation (5%).",
-        "Key trends: mobile learning (>70% mobile-only users), AI adoption (35% of products), and government digitalization programs (>$2B combined budgets).",
-        "Data not available for detailed corporate/upskilling market share in 2024."
+        "Market valued at $9.8B in 2024, expected to grow to $12.4B in 2025, with a CAGR of 19.5% from 2024 to 2029.",
+        "Revenue leaders: Indonesia ($3.1B), Vietnam ($2.0B), Philippines ($1.7B), Thailand ($1.4B), Malaysia ($1.2B).",
+        "Segment breakdown: K-12 (38%), Higher education (27%), Language learning (18%), Corporate/upskilling (12%), Test preparation (5%).",
+        "Key trends: mobile-first usage (>70% mobile-only), AI integration (from 12% in 2023 to 35% in 2025), and government digitalization programs (>$2B combined budget).",
+        "Forecasts based on 2025 industry reports; all figures in USD."
       ],
       "estimated_length": "1-1.5 pages"
     },
     {
       "section_number": 3,
       "title": "Competitive Landscape",
-      "description": "Assessment of major competitors, their market positions, and strategic strengths.",
+      "description": "Assessment of major competitors in the region, their market positions, strengths, and implications for market entry.",
       "key_points": [
-        "GoToClass (Indonesia): K-12 online courses, >15M users, regional revenue leader.",
-        "EduVn (Vietnam): Language learning platform, strong in ESL, >8M active users.",
-        "PhilLearn (Philippines): Corporate upskilling provider, B2B focus, partnerships with 300+ companies.",
-        "ThaiEdTech (Thailand): Test preparation platform, integrated with national school curriculum.",
-        "Competitive dynamics: aggressive pricing in K-12, high customer acquisition costs ($45-$70 per user)."
+        "GoToClass (Indonesia): EdTech unicorn, leader in K-12 online courses, >15M users, highest revenue in the region.",
+        "EduVn (Vietnam): Strong in language learning (ESL), >8M active users, dominant in the Vietnamese market.",
+        "PhilLearn (Philippines): B2B corporate upskilling provider, partnerships with 300+ companies, niche focus.",
+        "ThaiEdTech (Thailand): Test preparation platform, integrated with the national school curriculum.",
+        "Competitive dynamics: aggressive price competition in K-12, high customer acquisition costs (CAC $45-$70 per user)."
       ],
       "estimated_length": "1-1.5 pages"
     },
     {
       "section_number": 4,
       "title": "Key Risks",
-      "description": "Identification and analysis of regulatory, cultural, competitive, and infrastructure risks.",
+      "description": "Identification and analysis of regulatory, cultural, competitive, and infrastructure risks that could impact market entry.",
       "key_points": [
         "Regulatory: Varying content licensing requirements across countries; data residency mandates for student personal data.",
-        "Cultural: Need for localization in local languages (Vietnamese, Thai, Indonesian) and adaptation to local curricula.",
-        "Competitive: Price wars in K-12 segment; high CAC ($45-$70 per user) impacting profitability.",
-        "Infrastructure: Unstable internet in rural areas; low smartphone penetration among certain demographics.",
-        "Mitigation strategies: Partner with local entities, invest in localization, and adopt a phased market entry."
+        "Cultural: Need for localization in local languages (Vietnamese, Thai, Indonesian) and alignment with local curricula.",
+        "Competitive: Intense price wars in K-12; high CAC ($45-$70) and significant marketing investment required.",
+        "Infrastructure: Unstable internet in rural areas and lower smartphone penetration among certain demographics.",
+        "Data availability: Some data gaps exist (e.g., corporate/upskilling segment share for 2024) - mark as 'Data not available' where applicable."
       ],
       "estimated_length": "1 page"
     },
     {
       "section_number": 5,
       "title": "Recommendations",
-      "description": "Actionable recommendations for market entry, including target markets, segments, and strategic approach.",
+      "description": "Actionable, data-driven recommendations for market entry, including target markets, segments, and strategic approach.",
       "key_points": [
         "Prioritize entry into Indonesia and Vietnam due to market size and growth potential.",
-        "Focus on K-12 and language learning segments, which together represent 56% of market revenue.",
-        "Adopt a mobile-first product strategy to cater to the >70% mobile-only user base.",
-        "Integrate AI features (personalization, automated grading, AI tutors) to differentiate offerings.",
-        "Develop localization strategy for content and language; consider partnerships with local players to navigate regulatory and cultural barriers."
+        "Focus on K-12 and language learning segments, which together account for 56% of market revenue.",
+        "Adopt a mobile-first product strategy to align with user behavior (>70% mobile-only).",
+        "Integrate AI features (personalization, auto-grading, AI tutors) to differentiate and meet market trends.",
+        "Develop a phased entry plan: start with a single market (e.g., Indonesia), establish partnerships, then expand regionally."
       ],
       "estimated_length": "1-1.5 pages"
     }
