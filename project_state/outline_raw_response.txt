@@ -1,0 +1,70 @@
+{
+  "outline": [
+    {
+      "section_number": 1,
+      "title": "Executive Summary",
+      "description": "A concise summary of the market opportunity, key findings, and strategic recommendations for the board of directors.",
+      "key_points": [
+        "Market size of $9.8B in 2024, projected to reach $12.4B in 2025 (26% YoY growth), with a CAGR of 19.5% through 2029.",
+        "Indonesia, Vietnam, and the Philippines are the largest revenue markets, with Indonesia leading at $3.1B.",
+        "Mobile-first approach is essential as over 70% of users access platforms exclusively via mobile devices.",
+        "AI integration is a key differentiator, with AI-featured products growing from 12% (2023) to 35% (2025).",
+        "Recommend a phased entry starting with Indonesia and Vietnam, focusing on K-12 and language learning segments."
+      ],
+      "estimated_length": "0.5-1 page"
+    },
+    {
+      "section_number": 2,
+      "title": "Market Overview",
+      "description": "Detailed analysis of the EdTech market size, growth forecasts, and segment breakdown in Southeast Asia.",
+      "key_points": [
+        "Total market size: $9.8B in 2024, projected $12.4B in 2025, with a CAGR of 19.5% (2024-2029).",
+        "Country breakdown: Indonesia ($3.1B), Vietnam ($2.0B), Philippines ($1.7B), Thailand ($1.4B), Malaysia ($1.2B).",
+        "Segment distribution: K-12 (38%), Higher education (27%), Language learning (18%), Corporate/upskilling (12%), Test preparation (5%).",
+        "Key trends: mobile learning (>70% mobile-only users), AI adoption (35% of products), and government digitalization programs (>$2B combined budgets).",
+        "Data not available for detailed corporate/upskilling market share in 2024."
+      ],
+      "estimated_length": "1-1.5 pages"
+    },
+    {
+      "section_number": 3,
+      "title": "Competitive Landscape",
+      "description": "Assessment of major competitors, their market positions, and strategic strengths.",
+      "key_points": [
+        "GoToClass (Indonesia): K-12 online courses, >15M users, regional revenue leader.",
+        "EduVn (Vietnam): Language learning platform, strong in ESL, >8M active users.",
+        "PhilLearn (Philippines): Corporate upskilling provider, B2B focus, partnerships with 300+ companies.",
+        "ThaiEdTech (Thailand): Test preparation platform, integrated with national school curriculum.",
+        "Competitive dynamics: aggressive pricing in K-12, high customer acquisition costs ($45-$70 per user)."
+      ],
+      "estimated_length": "1-1.5 pages"
+    },
+    {
+      "section_number": 4,
+      "title": "Key Risks",
+      "description": "Identification and analysis of regulatory, cultural, competitive, and infrastructure risks.",
+      "key_points": [
+        "Regulatory: Varying content licensing requirements across countries; data residency mandates for student personal data.",
+        "Cultural: Need for localization in local languages (Vietnamese, Thai, Indonesian) and adaptation to local curricula.",
+        "Competitive: Price wars in K-12 segment; high CAC ($45-$70 per user) impacting profitability.",
+        "Infrastructure: Unstable internet in rural areas; low smartphone penetration among certain demographics.",
+        "Mitigation strategies: Partner with local entities, invest in localization, and adopt a phased market entry."
+      ],
+      "estimated_length": "1 page"
+    },
+    {
+      "section_number": 5,
+      "title": "Recommendations",
+      "description": "Actionable recommendations for market entry, including target markets, segments, and strategic approach.",
+      "key_points": [
+        "Prioritize entry into Indonesia and Vietnam due to market size and growth potential.",
+        "Focus on K-12 and language learning segments, which together represent 56% of market revenue.",
+        "Adopt a mobile-first product strategy to cater to the >70% mobile-only user base.",
+        "Integrate AI features (personalization, automated grading, AI tutors) to differentiate offerings.",
+        "Develop localization strategy for content and language; consider partnerships with local players to navigate regulatory and cultural barriers."
+      ],
+      "estimated_length": "1-1.5 pages"
+    }
+  ],
+  "total_estimated_pages": 5
+}
