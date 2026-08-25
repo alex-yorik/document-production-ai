@@ -3,65 +3,65 @@
     {
       "section_number": 1,
       "title": "Executive Summary",
-      "description": "A concise overview of the Southeast Asian EdTech market opportunity, key findings from the analysis, and the main strategic recommendations for market entry. This section is designed for C-level executives to grasp the essential conclusions quickly.",
+      "description": "A concise summary of the market opportunity, key findings, and strategic recommendations for the board of directors.",
       "key_points": [
-        "Market size and growth: $9.8B in 2024, projected $12.4B in 2025 (26% YoY growth), CAGR 19.5% through 2029.",
-        "Key opportunity: Mobile-first learning is dominant (>70% mobile-only users), and AI adoption is rapidly increasing (from 12% in 2023 to 35% in 2025).",
-        "Primary recommendation: Enter via Indonesia (largest market at $3.1B) with a mobile-first, AI-enhanced product, focusing on the K-12 segment (38% of revenue).",
-        "Critical risks: Regulatory data residency requirements, cultural adaptation needs, and high customer acquisition costs ($45-$70 per user).",
-        "Strategic approach: Prioritize partnerships with local players and leverage government digitalization initiatives (>$2B combined budgets)."
+        "Market size of $9.8B in 2024, projected to reach $12.4B in 2025 (26% YoY growth), with a CAGR of 19.5% through 2029.",
+        "Indonesia, Vietnam, and the Philippines are the largest revenue markets, presenting primary entry targets.",
+        "Mobile-first approach is essential as over 70% of users access platforms exclusively via mobile devices.",
+        "Recommendations focus on leveraging AI-driven personalization and targeting high-growth segments like K-12 and language learning.",
+        "Entry strategy should prioritize partnerships and localization to navigate regulatory and cultural barriers."
       ],
       "estimated_length": "0.5-1 page"
     },
     {
       "section_number": 2,
       "title": "Market Overview",
-      "description": "Detailed analysis of the Southeast Asian EdTech market size, growth forecasts, key segments, and major country markets. This section provides the quantitative foundation for the report.",
+      "description": "Detailed analysis of the EdTech market size, growth forecasts, segment breakdown, and key trends in Southeast Asia.",
       "key_points": [
-        "Market size: $9.8B in 2024, projected to reach $12.4B in 2025, with a CAGR of 19.5% from 2024 to 2029.",
-        "Country breakdown: Indonesia ($3.1B), Vietnam ($2.0B), Philippines ($1.7B), Thailand ($1.4B), Malaysia ($1.2B) in 2024.",
-        "Segment breakdown: K-12 (38%), Higher education (27%), Language learning (18%), Corporate/upskilling (12%), Test preparation (5%).",
-        "Key trends: Mobile-first usage (>70% mobile-only), AI integration (35% of products by 2025), and government digitalization programs (>$2B combined).",
-        "Data note: Partial data available for corporate/upskilling segment share in 2024; other data points are as per market_data.md."
+        "Total market size: $9.8B in 2024, forecasted $12.4B in 2025, with a CAGR of 19.5% (2024-2029).",
+        "Country revenue breakdown: Indonesia ($3.1B), Vietnam ($2.0B), Philippines ($1.7B), Thailand ($1.4B), Malaysia ($1.2B).",
+        "Segment shares: K-12 (38%), Higher education (27%), Language learning (18%), Corporate/upskilling (12%), Test preparation (5%).",
+        "Key trends: mobile-first usage (>70%), AI adoption in products (from 12% in 2023 to 35% in 2025), and government digitalization programs (>$2B combined budget).",
+        "Data not available for detailed corporate/upskilling market share in 2024."
       ],
       "estimated_length": "1-1.5 pages"
     },
     {
       "section_number": 3,
       "title": "Competitive Landscape",
-      "description": "Examination of the main competitors in the Southeast Asian EdTech market, their market positions, strengths, and strategic focus areas. This section helps identify competitive gaps and opportunities.",
+      "description": "Profiles of major competitors, their market positions, and strategic strengths to inform competitive strategy.",
       "key_points": [
-        "GoToClass (Indonesia): Leading EdTech unicorn, K-12 online courses, >15M users, regional revenue leader.",
-        "EduVn (Vietnam): Strong in language learning (ESL), >8M active users.",
-        "PhilLearn (Philippines): B2B corporate upskilling provider, partnerships with 300+ companies.",
+        "GoToClass (Indonesia): K-12 online courses, >15M users, regional revenue leader.",
+        "EduVn (Vietnam): Language learning platform, strong in ESL, >8M active users.",
+        "PhilLearn (Philippines): Corporate upskilling provider, B2B focus, partnerships with 300+ companies.",
         "ThaiEdTech (Thailand): Test preparation platform, integrated with national school curriculum.",
-        "Competitive dynamics: Intense price competition in K-12, high CAC ($45-$70 per user) indicates a crowded market."
+        "Competitive dynamics: intense price competition in K-12, high customer acquisition costs ($45-$70 per user)."
       ],
       "estimated_length": "1-1.5 pages"
     },
     {
       "section_number": 4,
       "title": "Key Risks",
-      "description": "Identification and analysis of the main risks associated with entering the Southeast Asian EdTech market, including regulatory, cultural, competitive, and infrastructure challenges.",
+      "description": "Assessment of regulatory, cultural, competitive, and infrastructure risks that could impact market entry.",
       "key_points": [
-        "Regulatory risks: Varying content licensing requirements across countries; data residency mandates for student personal data.",
-        "Cultural risks: Need for localization in local languages (Vietnamese, Thai, Indonesian) and adaptation to local curricula.",
-        "Competitive risks: Active price wars in K-12 segment; high customer acquisition costs ($45-$70 per user).",
-        "Infrastructure risks: Unstable internet in rural areas; low smartphone penetration among certain population segments.",
-        "Mitigation strategies: Develop flexible content adaptation framework, invest in offline-capable features, and consider partnerships to navigate regulatory landscapes."
+        "Regulatory: Varying content licensing requirements across countries; data residency mandates for student personal data.",
+        "Cultural: Need for localization in local languages (Vietnamese, Thai, Indonesian) and alignment with local curricula.",
+        "Competitive: Price wars in K-12 segment; high CAC ($45-$70 per user) affecting profitability.",
+        "Infrastructure: Unstable internet in rural areas and low smartphone penetration among certain demographics.",
+        "Risk mitigation: Partner with local entities, invest in offline-compatible solutions, and adopt flexible data storage strategies."
       ],
-      "estimated_length": "1-1.5 pages"
+      "estimated_length": "1 page"
     },
     {
       "section_number": 5,
       "title": "Recommendations",
-      "description": "Practical, actionable recommendations for market entry, based on the analysis of market data, competitive landscape, and risks. These are designed to guide strategic decision-making for the board.",
+      "description": "Actionable steps for market entry, including target markets, product strategy, and operational considerations.",
       "key_points": [
-        "Market entry strategy: Prioritize Indonesia as the primary entry market due to its size ($3.1B) and growth potential.",
-        "Product strategy: Develop a mobile-first platform with AI-driven personalization to align with key trends (>70% mobile-only users, 35% AI adoption).",
-        "Segment focus: Target the K-12 segment (38% of revenue) but consider differentiation to avoid direct price competition.",
-        "Partnership approach: Form strategic alliances with local players (e.g., schools, corporations) and leverage government digitalization programs.",
-        "Risk management: Implement a phased rollout to address regulatory and cultural challenges, and allocate budget for localization and compliance."
+        "Prioritize entry into Indonesia and Vietnam due to market size and growth potential.",
+        "Adopt a mobile-first product design to cater to the majority of users.",
+        "Integrate AI features (personalization, auto-grading, AI tutors) to differentiate and align with market trends.",
+        "Develop localized content in local languages and adapt to national curricula.",
+        "Form strategic partnerships with local players and government programs to navigate regulatory hurdles and reduce CAC."
       ],
       "estimated_length": "1-1.5 pages"
     }

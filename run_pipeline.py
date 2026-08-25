@@ -28,11 +28,45 @@ def setup_logging() -> None:
     )
 
 
+def count_resolved_issues(draft_issues: list, final_issues: list) -> int:
+    """Считает issues как resolved, если:
+    - issue полностью исчез из final
+    - issue изменил severity на более низкий (HIGH→MEDIUM, MEDIUM→LOW)
+    """
+    severity_order = {'HIGH': 3, 'MEDIUM': 2, 'LOW': 1}
+
+    resolved = 0
+
+    # Сопоставляем issues по section + description
+    for draft in draft_issues:
+        draft_key = f"{draft.get('section')}_{draft.get('description', '')[:50]}"
+        draft_severity = severity_order.get(draft.get('severity'), 0)
+
+        # Ищем соответствующий issue в final
+        found = False
+        for final in final_issues:
+            final_key = f"{final.get('section')}_{final.get('description', '')[:50]}"
+            if draft_key == final_key:
+                final_severity = severity_order.get(final.get('severity'), 0)
+                if final_severity < draft_severity:
+                    resolved += 1  # severity понизился
+                found = True
+                break
+
+        if not found:
+            resolved += 1  # issue полностью исчез
+
+    return resolved
+
+
 def _build_metrics(qc_report: dict, qc_report_final: dict) -> dict:
     """Compute before/after quality metrics for the UI."""
     draft_issues = len(qc_report.get("issues", []))
     final_issues = len(qc_report_final.get("issues", []))
-    resolved = draft_issues - final_issues
+    resolved = count_resolved_issues(
+        qc_report.get("issues", []),
+        qc_report_final.get("issues", []),
+    )
     return {
         "draft_score": qc_report.get("overall_score", 0),
         "final_score": qc_report_final.get("overall_score", 0),
@@ -143,7 +177,7 @@ def run_full_pipeline() -> dict:
     final_score = qc_report_final['overall_score']
     initial_issues = len(qc_report['issues'])
     final_issues = len(qc_report_final['issues'])
-    resolved_issues = initial_issues - final_issues
+    resolved_issues = count_resolved_issues(qc_report['issues'], qc_report_final['issues'])
 
     logging.info(f"Quality Improvement: {initial_score} → {final_score} (+{final_score - initial_score})")
     logging.info(f"Issues Resolved: {resolved_issues}/{initial_issues}")
