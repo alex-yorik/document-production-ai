@@ -7,6 +7,7 @@ Stages:
     4. Section generation: write each section with LLM + retrieval.
     5. AI Quality Review: run the QC reviewer over the generated sections.
     6. Revision loop: fix HIGH severity issues by regenerating sections.
+    6.5. Final QC review: re-run the reviewer after revisions for before/after metrics.
     7. Document assembly: export the report to DOCX in output/.
 """
 
@@ -102,13 +103,42 @@ def main() -> int:
     else:
         logging.info("Stage 6: No HIGH issues found. Skipping revision.")
 
+    # --- Stage 6.5: Final QC Review (после исправлений) ---------------------
+    logging.info("Stage 6.5: Final QC Review (post-revision)")
+    qc_report_final = qc_reviewer.review_sections(sections, outline, methodology_text)
+
+    logging.info(f"Final QC Score: {qc_report_final['overall_score']}/100")
+    logging.info(f"Final issues: {len(qc_report_final['issues'])}")
+    logging.info(f"  HIGH: {sum(1 for i in qc_report_final['issues'] if i['severity'] == 'HIGH')}")
+    logging.info(f"  MEDIUM: {sum(1 for i in qc_report_final['issues'] if i['severity'] == 'MEDIUM')}")
+    logging.info(f"  LOW: {sum(1 for i in qc_report_final['issues'] if i['severity'] == 'LOW')}")
+
+    # Вычисляем метрики улучшения
+    initial_score = qc_report['overall_score']
+    final_score = qc_report_final['overall_score']
+    initial_issues = len(qc_report['issues'])
+    final_issues = len(qc_report_final['issues'])
+    resolved_issues = initial_issues - final_issues
+
+    logging.info(f"Quality Improvement: {initial_score} → {final_score} (+{final_score - initial_score})")
+    logging.info(f"Issues Resolved: {resolved_issues}/{initial_issues}")
+
+    # ВАЖНО: Максимум 1 дополнительный QC-прогон после revision (без рекурсии)
+    # Если после второго прогона остались HIGH issues — выводим их как "known limitations"
+    if qc_report_final['issues']:
+        remaining_high = [i for i in qc_report_final['issues'] if i['severity'] == 'HIGH']
+        if remaining_high:
+            logging.warning(
+                f"{len(remaining_high)} HIGH issues remain after revision — marked as known limitations"
+            )
+
     # --- Stage 7: Document Assembly ------------------------------------------
     logging.info("Stage 7: Document Assembly")
     from src.document_assembler import DocumentAssembler
 
     assembler = DocumentAssembler()
-    doc_path = assembler.assemble_document(sections, outline, qc_report)
-    qc_report_path = assembler.generate_quality_report(qc_report)
+    doc_path = assembler.assemble_document(sections, outline, qc_report_final)  # используем финальный
+    qc_report_path = assembler.generate_quality_report(qc_report, qc_report_final)  # передаём оба для сравнения
 
     logging.info(f"Final report saved to: {doc_path}")
     logging.info(f"QC report saved to: {qc_report_path}")

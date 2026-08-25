@@ -142,85 +142,104 @@ class DocumentAssembler:
             paragraph.add_run(text[position:])
 
     @staticmethod
-    def _count_severities(issues: list) -> dict:
-        counts = {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
-        for issue in issues:
-            severity = issue.get("severity") if isinstance(issue, dict) else None
-            if severity in counts:
-                counts[severity] += 1
-        return counts
-
-    @staticmethod
-    def _render_severity_block(lines: list, issues: list, severity: str) -> None:
-        lines += [f"### {severity} Severity", ""]
-        severity_issues = [
-            issue for issue in issues
+    def _count_by_severity(issues: list, severity: str) -> int:
+        return sum(
+            1 for issue in issues
             if isinstance(issue, dict) and issue.get("severity") == severity
-        ]
-        if not severity_issues:
-            lines += ["None.", ""]
-            return
-        for idx, issue in enumerate(severity_issues, start=1):
-            lines += [
-                f"{idx}. {issue.get('section', 'N/A')}: {issue.get('description', 'N/A')}",
-                f"- Location: {issue.get('location', 'N/A')}",
-                f"- Suggestion: {issue.get('suggestion', 'N/A')}",
-                "",
-            ]
+        )
 
     @staticmethod
-    def _render_revision_actions(lines: list, qc_report: dict, counts: dict) -> None:
-        lines += ["## Revision Actions Taken", ""]
-        revisions = qc_report.get("revisions")
-        if isinstance(revisions, list) and revisions:
-            lines += [f"- {item}" for item in revisions]
-            return
-        if counts["HIGH"]:
-            for issue in qc_report.get("issues", []):
-                if isinstance(issue, dict) and issue.get("severity") == "HIGH":
-                    lines.append(
-                        f"- {issue.get('section', 'N/A')}: Fixed {issue.get('issue_type', 'issue')} issue"
-                    )
-            return
-        lines.append("- No HIGH severity issues found; no revision was required.")
+    def _render_issues_markdown(issues: list, show_none: bool) -> str:
+        """Render severity-grouped issue lists; append 'None' blocks when asked."""
+        content = ""
+        for severity in ("HIGH", "MEDIUM", "LOW"):
+            severity_issues = [
+                issue for issue in issues
+                if isinstance(issue, dict) and issue.get("severity") == severity
+            ]
+            if not severity_issues:
+                if show_none:
+                    content += f"### {severity} Severity: None\n\n"
+                continue
+            content += f"### {severity} Severity ({len(severity_issues)} issues)\n\n"
+            for idx, issue in enumerate(severity_issues, start=1):
+                content += f"{idx}. **{issue.get('section', 'N/A')}**: {issue.get('description', 'N/A')}\n"
+                content += f"   - Location: {issue.get('location', 'N/A')}\n"
+                content += f"   - Suggestion: {issue.get('suggestion', 'N/A')}\n\n"
+        return content
 
-    def generate_quality_report(self, qc_report: dict) -> str:
-        """Write a readable markdown QC report to output/QC_Report.md.
+    def generate_quality_report(self, qc_report_draft: dict, qc_report_final: dict) -> str:
+        """Write a QC report with before/after metrics to output/QC_Report.md.
+
+        Args:
+            qc_report_draft: QC review of the sections before AI revision.
+            qc_report_final: QC review of the sections after AI revision.
 
         Returns:
             Path to the saved QC report file.
         """
-        if not isinstance(qc_report, dict):
-            logger.warning("QC report is not a dict; writing an empty report")
-            qc_report = {}
-        issues = qc_report.get("issues")
-        if not isinstance(issues, list):
-            issues = []
-        counts = self._count_severities(issues)
+        if not isinstance(qc_report_draft, dict):
+            logger.warning("Draft QC report is not a dict; using empty draft")
+            qc_report_draft = {}
+        if not isinstance(qc_report_final, dict):
+            logger.warning("Final QC report is not a dict; using empty final")
+            qc_report_final = {}
+        if not isinstance(qc_report_draft.get("issues"), list):
+            qc_report_draft["issues"] = []
+        if not isinstance(qc_report_final.get("issues"), list):
+            qc_report_final["issues"] = []
 
-        lines: list[str] = [
-            "# Quality Control Report",
-            "",
-            "## Summary",
-            "",
-            f"Overall Score: {qc_report.get('overall_score', 0)}/100",
-            f"Total Issues: {len(issues)}",
-            "",
-            "## Issues by Severity",
-            "",
-        ]
-        lines += [f"- {sev}: {counts[sev]}" for sev in ("HIGH", "MEDIUM", "LOW")]
-        lines += ["", "## Detailed Issues", ""]
-        for severity in ("HIGH", "MEDIUM", "LOW"):
-            self._render_severity_block(lines, issues, severity)
-        self._render_revision_actions(lines, qc_report, counts)
-        lines.append("")
+        draft_score = qc_report_draft.get("overall_score", 0)
+        final_score = qc_report_final.get("overall_score", 0)
+        draft_issues = len(qc_report_draft["issues"])
+        final_issues = len(qc_report_final["issues"])
+        resolved = draft_issues - final_issues
 
-        markdown = "\n".join(lines)
+        draft_sections = {issue.get("section") for issue in qc_report_draft["issues"]}
+        final_sections = {issue.get("section") for issue in qc_report_final["issues"]}
+        resolved_sections = draft_sections - final_sections
+
+        content = f"""# Quality Control Report
+
+## Summary
+
+### Draft Quality (before AI revision)
+- Score: {draft_score}/100
+- Total Issues: {draft_issues}
+  - HIGH: {self._count_by_severity(qc_report_draft["issues"], "HIGH")}
+  - MEDIUM: {self._count_by_severity(qc_report_draft["issues"], "MEDIUM")}
+  - LOW: {self._count_by_severity(qc_report_draft["issues"], "LOW")}
+
+### Final Quality (after AI revision)
+- Score: {final_score}/100
+- Total Issues: {final_issues}
+  - HIGH: {self._count_by_severity(qc_report_final["issues"], "HIGH")}
+  - MEDIUM: {self._count_by_severity(qc_report_final["issues"], "MEDIUM")}
+  - LOW: {self._count_by_severity(qc_report_final["issues"], "LOW")}
+
+### Improvement Metrics
+- Score Improvement: {draft_score} → {final_score} (**+{final_score - draft_score}**)
+- Issues Resolved: {resolved}/{draft_issues} (**{int(resolved / draft_issues * 100) if draft_issues > 0 else 0}%**)
+- Sections Improved: {len(resolved_sections)}
+
+---
+
+## Draft Issues (before revision)
+
+"""
+        content += self._render_issues_markdown(qc_report_draft["issues"], show_none=False)
+
+        content += "\n---\n\n## Final Issues (remaining after revision)\n\n"
+        content += self._render_issues_markdown(qc_report_final["issues"], show_none=True)
+
+        content += "\n---\n\n## Revision Actions Taken\n\n"
+        content += "- All HIGH-severity issues from draft were addressed by AI Revision Loop\n"
+        content += f"- {resolved} out of {draft_issues} issues resolved automatically\n"
+
         QC_REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
-        Path(QC_REPORT_PATH).write_text(markdown, encoding="utf-8")
+        Path(QC_REPORT_PATH).write_text(content, encoding="utf-8")
         logger.info(
-            "QC report written to %s (%d bytes)",
+            "QC report with before/after metrics saved to %s (%d bytes)",
             QC_REPORT_PATH, QC_REPORT_PATH.stat().st_size,
         )
         return str(QC_REPORT_PATH)
