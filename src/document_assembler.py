@@ -230,10 +230,30 @@ class DocumentAssembler:
         content += self._render_issues_markdown(qc_report_draft["issues"], show_none=False)
 
         content += "\n---\n\n## Final Issues (remaining after revision)\n\n"
-        content += self._render_issues_markdown(qc_report_final["issues"], show_none=True)
+
+        for severity in ["HIGH", "MEDIUM", "LOW"]:
+            issues = [i for i in qc_report_final["issues"] if i["severity"] == severity]
+            if issues:
+                content += f"### {severity} Severity ({len(issues)} issues)\n\n"
+                for idx, issue in enumerate(issues, 1):
+                    content += f"{idx}. **{issue['section']}**: {issue['description']}\n"
+                    content += f"   - Location: {issue['location']}\n"
+                    content += f"   - Suggestion: {issue['suggestion']}\n\n"
+            else:
+                content += f"### {severity} Severity: None\n\n"
 
         content += "\n---\n\n## Revision Actions Taken\n\n"
-        content += "- All HIGH-severity issues from draft were addressed by AI Revision Loop\n"
+
+        remaining_high = sum(1 for i in qc_report_final["issues"] if i["severity"] == "HIGH")
+
+        if remaining_high == 0:
+            content += "- All HIGH-severity issues from draft were addressed by AI Revision Loop\n"
+        else:
+            content += (
+                f"- {remaining_high} HIGH-severity issue(s) remain after AI revision — "
+                "flagged below for human review\n"
+            )
+
         content += f"- {resolved} out of {draft_issues} issues resolved automatically\n"
 
         QC_REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)

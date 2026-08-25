@@ -28,8 +28,33 @@ def setup_logging() -> None:
     )
 
 
-def main() -> int:
-    """Run the full pipeline and return a process exit code."""
+def _build_metrics(qc_report: dict, qc_report_final: dict) -> dict:
+    """Compute before/after quality metrics for the UI."""
+    draft_issues = len(qc_report.get("issues", []))
+    final_issues = len(qc_report_final.get("issues", []))
+    resolved = draft_issues - final_issues
+    return {
+        "draft_score": qc_report.get("overall_score", 0),
+        "final_score": qc_report_final.get("overall_score", 0),
+        "draft_issues": draft_issues,
+        "final_issues": final_issues,
+        "resolved_issues": resolved,
+        "remaining_high": sum(
+            1 for i in qc_report_final.get("issues", [])
+            if isinstance(i, dict) and i.get("severity") == "HIGH"
+        ),
+        "remaining_issues": qc_report_final.get("issues", []),
+        "resolution_rate": int(resolved / draft_issues * 100) if draft_issues > 0 else 0,
+    }
+
+
+def run_full_pipeline() -> dict:
+    """Run the full pipeline and return metrics for the UI.
+
+    Returns:
+        dict with keys: draft_score, final_score, draft_issues, final_issues,
+        resolved_issues, remaining_high, remaining_issues, resolution_rate.
+    """
     setup_logging()
     load_env()
 
@@ -144,6 +169,12 @@ def main() -> int:
     logging.info(f"QC report saved to: {qc_report_path}")
     logging.info("Pipeline completed successfully!")
 
+    return _build_metrics(qc_report, qc_report_final)
+
+
+def main() -> int:
+    """Run the full pipeline and return a process exit code."""
+    run_full_pipeline()
     return 0
 
 

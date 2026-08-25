@@ -50,6 +50,35 @@ Severity rules:
 Conciseness rules:
 - Keep each issue description, location, and suggestion short (under 50 words)
 - Limit the total number of issues to a maximum of 10
+
+## Severity Calibration (with examples):
+
+### HIGH Severity:
+A number, statistic, or specific fact stated as true that does not appear anywhere in the source data.
+Examples:
+- "$24B market by 2029" when no such projection exists in sources
+- "world's fourth most populous country" when this fact is not in source documents
+- "15 million users" when source only says "large user base"
+
+### MEDIUM Severity:
+An interpretation or conclusion that is plausible but not directly stated in the sources.
+Examples:
+- "this suggests strong demand" when sources only give raw numbers, not analysis
+- "competitive advantage" when source describes features but doesn't use this term
+- "likely to succeed" when source doesn't make predictions
+
+### LOW Severity:
+A stylistic or minor phrasing issue that doesn't affect factual accuracy.
+Examples:
+- Inconsistent terminology (using "EdTech" and "education technology" interchangeably)
+- Slightly informal tone in a professional report
+- Minor grammatical issues that don't change meaning
+
+## Rules:
+- If a claim has NO support in sources → HIGH
+- If a claim has PARTIAL support but goes beyond what's stated → MEDIUM
+- If a claim is factually correct but poorly phrased → LOW
+- When in doubt, choose MEDIUM over HIGH
 """
 
 
