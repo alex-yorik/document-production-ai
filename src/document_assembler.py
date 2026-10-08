@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 FINAL_REPORT_PATH = OUTPUT_DIR / "Final_Report.docx"
 QC_REPORT_PATH = OUTPUT_DIR / "QC_Report.md"
 
-TITLE = "Market Entry Report: EdTech in Southeast Asia"
+TITLE = os.getenv("REPORT_TITLE", "Market Entry Report: EdTech in Southeast Asia")
 SUBTITLE = "Prepared by AI Document Production System"
 
 BOLD_PATTERN = re.compile(r"\*\*(.+?)\*\*")

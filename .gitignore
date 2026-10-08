@@ -3,5 +3,9 @@ __pycache__/
 *.pyc
 *.log
 project_state/*.json
+project_state/*.txt
 output/*.docx
 output/*.md
+*.db
+*.sqlite
+*.sqlite3

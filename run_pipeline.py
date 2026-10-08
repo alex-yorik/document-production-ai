@@ -15,7 +15,7 @@ import logging
 import sys
 
 from src import ingestion, retrieval
-from src.utils import load_env, load_json
+from src.utils import INPUT_DIR, load_env, load_json
 
 
 def setup_logging() -> None:
@@ -128,7 +128,7 @@ def run_full_pipeline() -> dict:
     all_chunks = load_json("project_state/chunks.json")
 
     # Загружаем methodology
-    with open("input/methodology.md", "r", encoding="utf-8") as f:
+    with open(INPUT_DIR / "methodology.md", "r", encoding="utf-8") as f:
         methodology_text = f.read()
 
     # Генерируем все разделы

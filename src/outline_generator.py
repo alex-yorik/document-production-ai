@@ -2,16 +2,11 @@
 
 import json
 import logging
-from pathlib import Path
 
 from src.llm_client import DeepSeekClient, format_system_message, format_user_message
-from src.utils import save_json
+from src.utils import INPUT_DIR, STATE_DIR, save_json
 
 logger = logging.getLogger(__name__)
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-STATE_DIR = PROJECT_ROOT / "project_state"
-INPUT_DIR = PROJECT_ROOT / "input"
 
 OUTLINE_PATH = STATE_DIR / "outline.json"
 OUTLINE_RAW_PATH = STATE_DIR / "outline_raw_response.txt"

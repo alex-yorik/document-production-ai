@@ -2,13 +2,14 @@
 
 import json
 import logging
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-INPUT_DIR = PROJECT_ROOT / "input"
+INPUT_DIR = PROJECT_ROOT / os.getenv("INPUT_DIR", "input")
 STATE_DIR = PROJECT_ROOT / "project_state"
 OUTPUT_DIR = PROJECT_ROOT / "output"
 
