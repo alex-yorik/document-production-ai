@@ -13,6 +13,7 @@ Stages:
 
 import logging
 import sys
+from pathlib import Path
 
 from src import ingestion, retrieval
 from src.utils import INPUT_DIR, load_env, load_json
@@ -26,6 +27,27 @@ def setup_logging() -> None:
         datefmt="%Y-%m-%d %H:%M:%S",
         stream=sys.stdout,
     )
+
+
+def validate_input_dir(input_dir: Path) -> None:
+    """Fail fast with actionable message if input is incomplete."""
+    if not input_dir.exists():
+        raise ValueError(
+            f"INPUT_DIR '{input_dir}' does not exist. "
+            f"Create it or run the demo: INPUT_DIR=demo/input python run_pipeline.py"
+        )
+    if not (input_dir / "methodology.md").exists():
+        raise ValueError(
+            f"'{input_dir}/methodology.md' is required. "
+            f"See demo/input/methodology.md for an example."
+        )
+    sources = [p for p in input_dir.iterdir()
+               if p.suffix in (".md", ".txt") and p.name != "methodology.md"]
+    if not sources:
+        raise ValueError(
+            f"No source documents in '{input_dir}'. "
+            f"Add at least one .md/.txt file besides methodology.md."
+        )
 
 
 def count_resolved_issues(draft_issues: list, final_issues: list) -> int:
@@ -91,6 +113,7 @@ def run_full_pipeline() -> dict:
     """
     setup_logging()
     load_env()
+    validate_input_dir(INPUT_DIR)
 
     log = logging.getLogger("run_pipeline")
 
