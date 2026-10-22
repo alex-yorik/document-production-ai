@@ -1,3 +1,6 @@
+import os
+import traceback
+
 import streamlit as st
 from pathlib import Path
 
@@ -43,9 +46,11 @@ uploaded_files = st.file_uploader(
     key="file_uploader"
 )
 
+st.warning("Generating a report replaces all files currently stored in input/.")
+
 project_name = st.text_input(
     "Project name (optional)",
-    "Market Entry Report",
+    os.getenv("REPORT_TITLE", ""),
     key="project_name"
 )
 
@@ -71,6 +76,38 @@ def save_uploaded_files(uploaded_files):
         file_path = input_dir / uploaded_file.name
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getvalue())
+
+
+MIN_UPLOAD_FILES = 2
+MAX_UPLOAD_FILES = 5
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+
+
+def validate_uploads(uploaded_files) -> str | None:
+    """Validate uploaded source files before running the pipeline.
+
+    Returns an error message, or None if the uploads are valid.
+    """
+    if not uploaded_files or not (
+        MIN_UPLOAD_FILES <= len(uploaded_files) <= MAX_UPLOAD_FILES
+    ):
+        return "Upload 2 to 5 files..."
+
+    total_bytes = sum(len(f.getvalue()) for f in uploaded_files)
+    if total_bytes > MAX_UPLOAD_BYTES:
+        total_mb = total_bytes / (1024 * 1024)
+        return (
+            f"Total upload size is {total_mb:.1f} MB — the limit is 10 MB. "
+            "Remove a file or reduce its size."
+        )
+
+    if not any(f.name == "methodology.md" for f in uploaded_files):
+        return (
+            "methodology.md is required among the uploaded files. "
+            "The pipeline expects a file named `methodology.md`."
+        )
+
+    return None
 
 
 def format_delta(value: int) -> str:
@@ -176,8 +213,16 @@ if st.button("🚀 Generate Report", type="primary", disabled=len(uploaded_files
     # Сбрасываем флаг перед новой генерацией
     st.session_state['generation_complete'] = False
 
+    upload_error = validate_uploads(uploaded_files)
+    if upload_error:
+        st.error(upload_error)
+        st.stop()
+
     # Сохраняем файлы
     save_uploaded_files(uploaded_files)
+
+    if project_name:
+        os.environ["REPORT_TITLE"] = project_name
 
     # Экран 2: Обработка (спиннер)
     with st.spinner("Processing document... This will take 2-4 minutes"):
@@ -217,7 +262,6 @@ if st.button("🚀 Generate Report", type="primary", disabled=len(uploaded_files
 
         except Exception as e:
             st.error(f"Error: {str(e)}")
-            import traceback
             st.code(traceback.format_exc())
 
 # Footer

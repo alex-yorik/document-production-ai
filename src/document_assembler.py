@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 FINAL_REPORT_PATH = OUTPUT_DIR / "Final_Report.docx"
 QC_REPORT_PATH = OUTPUT_DIR / "QC_Report.md"
 
-TITLE = os.getenv("REPORT_TITLE", "Market Entry Report: EdTech in Southeast Asia")
 SUBTITLE = "Prepared by AI Document Production System"
 
 BOLD_PATTERN = re.compile(r"\*\*(.+?)\*\*")
@@ -68,12 +67,13 @@ class DocumentAssembler:
         return str(FINAL_REPORT_PATH)
 
     def _add_title_page(self, doc: Document, qc_report: dict) -> None:
+        title = os.getenv("REPORT_TITLE", "Market Entry Report")
         for _ in range(6):
             doc.add_paragraph()
 
         title_p = doc.add_paragraph()
         title_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        title_run = title_p.add_run(TITLE)
+        title_run = title_p.add_run(title)
         title_run.bold = True
         title_run.font.size = Pt(24)
 
