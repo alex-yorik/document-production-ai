@@ -1,9 +1,11 @@
 # AI Document Production & Quality Control
 
+[![CI](https://github.com/alex-yorik/document-production-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/alex-yorik/document-production-ai/actions/workflows/ci.yml)
+![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)
+![License](https://img.shields.io/badge/license-All%20rights%20reserved-red)
+
 A working prototype that turns source documents into a structured DOCX report —
 and then makes the AI critique and improve its own output before delivery.
-
-![Pipeline](docs/pipeline.png)
 
 ## Overview
 
@@ -38,6 +40,26 @@ does not blindly approve its own output.
 ## Architecture
 
 ```text
+Source docs (input/)
+        ↓
+   1. Ingestion     — chunk & persist
+        ↓
+   2. Retrieval     — keyword search layer
+        ↓
+   3. Outline       — LLM builds structure
+        ↓
+   4. Sections      — LLM + retrieval context
+        ↓
+   5. QC Review     — severity-scored issues
+        ↓
+   6. Revision      — regenerate HIGH-issue sections
+        ↓
+   6.5 Final QC     — before/after metrics
+        ↓
+   7. Assembly      — output/Final_Report.docx + QC_Report.md
+```
+
+```text
 run_pipeline.py            # pipeline entry point
 app.py                     # optional Streamlit web UI
 src/
@@ -69,16 +91,12 @@ Demo run results (real, unedited):
 | Quality score | 62/100         | 72/100                   |
 | Issues       | 13 (9 HIGH)     | 12 (5 HIGH, 7 MEDIUM)    |
 
-![QC report](docs/qc-report.png)
-
 ## Revision Loop
 
 Sections flagged with HIGH-severity issues are regenerated with the issues and
 source context injected into the prompt. One extra QC pass runs after revision;
 the loop deliberately does not recurse. Remaining HIGH issues are surfaced for
 human review, not hidden.
-
-![Final document](docs/final-document.png)
 
 ## Output
 
@@ -93,6 +111,12 @@ human review, not hidden.
 plus `demo/expected/` with the outputs of a real pipeline run. No real client
 data is used anywhere in this repository.
 
+![Pipeline](docs/pipeline.png)
+
+![QC Report](docs/qc-report.png)
+
+![Final Document](docs/final-document.png)
+
 ## Tech Stack
 
 - Python 3.12
@@ -103,17 +127,7 @@ data is used anywhere in this repository.
 
 ## Project Structure
 
-```text
-.
-├── run_pipeline.py      # pipeline entry point
-├── app.py               # optional Streamlit UI
-├── input/               # default input documents (synthetic)
-├── demo/                # synthetic demo dataset + expected outputs
-├── docs/                # images
-├── output/              # generated reports (gitignored)
-├── project_state/       # intermediate artifacts (gitignored)
-└── src/                 # pipeline modules (see Architecture)
-```
+Full directory tree: [docs/project-structure.md](docs/project-structure.md).
 
 ## Installation
 
@@ -153,24 +167,53 @@ Processing takes ~2–4 minutes (LLM calls). Results are written to
 `output/Final_Report.docx` and `output/QC_Report.md`, comparable to
 `demo/expected/`.
 
+## Web UI (Optional)
+
+```bash
+streamlit run app.py
+```
+
+- upload source documents through the browser
+- before/after metrics (draft score, final score, resolved issues) in the interface
+- download `Final_Report.docx` and `QC_Report.md` with one button
+
+> **WARNING: THE WEB UI OVERWRITES THE CONTENTS OF `input/` WHEN YOU UPLOAD FILES.**
+
+## Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest -q
+```
+
+12 offline tests — no API keys, no network.
+
 ## Limitations
 
-This is a working prototype. Current limitations include:
-
-- retrieval is intentionally lightweight;
-- document quality depends on source material;
-- AI-generated content requires human review;
-- the system is not yet designed for high-volume production;
-- authentication and multi-user management are outside the current scope.
+Working prototype — see [docs/limitations.md](docs/limitations.md) for the full list
+(lightweight retrieval, source-dependent quality, human review required,
+no high-volume production, no multi-user auth).
 
 ## Future Improvements
 
-- embeddings-based retrieval with relevance ranking
-- configurable document schemas beyond market entry reports
-- PDF export
-- human-in-the-loop review step before final assembly
+Embeddings-based retrieval, configurable document schemas, PDF export,
+human-in-the-loop review — see [docs/roadmap.md](docs/roadmap.md).
+
+## Scope & Authorship
+
+This project was designed and implemented entirely by the author:
+the pipeline, QC reviewer, revision loop, Streamlit UI, tests and CI.
 
 ## License
 
-**LICENSE DECISION REQUIRED** — no license has been selected yet. This must be
-decided before the repository is made public. All rights reserved until then.
+All rights reserved.
+
+This repository is published as a portfolio demonstration of my work in
+AI-assisted document production and quality control.
+
+The code is provided for review and evaluation purposes only.
+No commercial use, redistribution, or modification is permitted without
+explicit written permission from the author.
+
+For commercial use, licensing discussions, or custom development based
+on this architecture — please contact me directly.
