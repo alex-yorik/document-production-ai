@@ -8,12 +8,16 @@ import time
 import requests
 from dotenv import load_dotenv
 
-BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
-DEFAULT_MODEL = os.getenv("MODEL_NAME", "deepseek-chat")
+DEFAULT_BASE_URL = "https://api.deepseek.com/v1"
+DEFAULT_MODEL_NAME = "deepseek-chat"
+CHAT_ENDPOINT_PATH = "/chat/completions"
 
-CHAT_ENDPOINT = f"{BASE_URL}/chat/completions"
+# Maximum number of attempts before chat_completion gives up.
 MAX_RETRIES = 3
+# Delay between failed attempts, in seconds.
 RETRY_DELAY_SECONDS = 2.0
+# HTTP request timeout for a single chat completion call, in seconds.
+REQUEST_TIMEOUT_SECONDS = 60
 
 logger = logging.getLogger(__name__)
 
@@ -42,21 +46,22 @@ class DeepSeekClient:
     """Minimal OpenAI-compatible client for the DeepSeek chat API."""
 
     def __init__(self) -> None:
-        """Load API credentials from environment variables."""
+        """Load API credentials and endpoint configuration from the environment."""
         load_dotenv()
         self.api_key = os.getenv("DEEPSEEK_API_KEY")
-        self.base_url = os.getenv("DEEPSEEK_BASE_URL", BASE_URL)
+        self.base_url = os.getenv("DEEPSEEK_BASE_URL", DEFAULT_BASE_URL)
+        self.model = os.getenv("MODEL_NAME", DEFAULT_MODEL_NAME)
+        self.endpoint = f"{self.base_url}{CHAT_ENDPOINT_PATH}"
         if not self.api_key:
             raise ValueError(
                 "DEEPSEEK_API_KEY is not set. "
                 "Create a .env file in the project root (see .env.example) or export the variable."
             )
-        self.endpoint = f"{self.base_url}/chat/completions"
 
     def chat_completion(
         self,
         messages: list[dict[str, str]],
-        model: str = DEFAULT_MODEL,
+        model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2000,
     ) -> str:
@@ -64,7 +69,7 @@ class DeepSeekClient:
 
         Args:
             messages: List of {"role": ..., "content": ...} messages.
-            model: Model identifier to use.
+            model: Model identifier to use; defaults to the client configuration.
             temperature: Sampling temperature (0.0-2.0).
             max_tokens: Maximum number of tokens to generate.
 
@@ -74,6 +79,7 @@ class DeepSeekClient:
         Raises:
             RuntimeError: If all retries are exhausted or the API returns an error.
         """
+        model = model or self.model
         payload = {
             "model": model,
             "messages": messages,
@@ -89,7 +95,12 @@ class DeepSeekClient:
         for attempt in range(1, MAX_RETRIES + 1):
             started_at = time.monotonic()
             try:
-                response = requests.post(self.endpoint, headers=headers, json=payload, timeout=60)
+                response = requests.post(
+                    self.endpoint,
+                    headers=headers,
+                    json=payload,
+                    timeout=REQUEST_TIMEOUT_SECONDS,
+                )
                 elapsed = time.monotonic() - started_at
                 logger.debug(
                     "chat_completion attempt %d/%d took %.2fs (status %d)",
@@ -119,17 +130,17 @@ class DeepSeekClient:
         self,
         messages: list[dict[str, str]],
         schema_description: str | None = None,
-        model: str = DEFAULT_MODEL,
+        model: str | None = None,
         temperature: float = 0.0,
         max_tokens: int = 2000,
     ) -> dict | list:
-        """Request a JSON-only response and parse it robustly.
+        """Request a JSON-only response and parse it.
 
         Args:
             messages: Base conversation messages.
             schema_description: Human-readable JSON schema to request.
                 Prepended as a system message when provided.
-            model: Model identifier to use.
+            model: Model identifier to use; defaults to the client configuration.
             temperature: Sampling temperature (0.0-2.0).
             max_tokens: Maximum number of tokens to generate.
 
@@ -139,6 +150,7 @@ class DeepSeekClient:
         Raises:
             ValueError: If the response cannot be parsed as JSON.
         """
+        model = model or self.model
         if schema_description:
             system_prompt = (
                 f"Return ONLY valid JSON matching this schema: {schema_description}. "
@@ -153,12 +165,9 @@ class DeepSeekClient:
         raw = self.chat_completion(
             full_messages, model=model, temperature=temperature, max_tokens=max_tokens
         )
-        try:
-            return json.loads(_strip_json_fences(raw))
-        except json.JSONDecodeError:
-            logger.warning("Raw response was not valid JSON; retrying once after cleaning")
         cleaned = _strip_json_fences(raw)
         try:
             return json.loads(cleaned)
         except json.JSONDecodeError as exc:
+            logger.warning("Raw response was not valid JSON: %s", exc)
             raise ValueError(f"Could not parse model output as JSON: {raw[:500]}") from exc

@@ -5,14 +5,14 @@ import logging
 import re
 
 from src.llm_client import DeepSeekClient, format_system_message, format_user_message
-from src.utils import load_json, save_json
+from src.utils import STATE_DIR, load_json, save_json
 
 logger = logging.getLogger(__name__)
 
 QC_TEMPERATURE = 0.2
 QC_MAX_TOKENS = 2000
-CHUNKS_PATH = "project_state/chunks.json"
-QC_REPORT_PATH = "project_state/qc_report.json"
+CHUNKS_PATH = STATE_DIR / "chunks.json"
+QC_REPORT_PATH = STATE_DIR / "qc_report.json"
 
 SEVERITY_ORDER = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
 
@@ -206,7 +206,7 @@ Be strict and thorough. Identify ALL issues, even minor ones.
         )
 
     def review_sections(self, sections: dict, outline: dict, methodology_text: str) -> dict:
-        """Run the QC review and persist the report to project_state/qc_report.json."""
+        """Run the QC review and persist the report to the state directory."""
         self._ensure_chunks()
 
         messages = self._build_messages(sections, outline, methodology_text)

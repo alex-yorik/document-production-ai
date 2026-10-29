@@ -4,11 +4,11 @@ import logging
 
 from src.llm_client import format_user_message
 from src.section_generator import SECTION_MAX_TOKENS, SECTION_TEMPERATURE, SectionGenerator
-from src.utils import save_json
+from src.utils import STATE_DIR, save_json
 
 logger = logging.getLogger(__name__)
 
-DRAFT_SECTIONS_PATH = "project_state/draft_sections.json"
+DRAFT_SECTIONS_PATH = STATE_DIR / "draft_sections.json"
 
 
 class RevisionLoop:

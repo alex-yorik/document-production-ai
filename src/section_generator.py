@@ -3,11 +3,10 @@
 import logging
 import re
 import time
-from pathlib import Path
 
 from src.llm_client import DeepSeekClient, format_system_message, format_user_message
 from src.retrieval import format_context, get_relevant_chunks_for_section
-from src.utils import save_json
+from src.utils import STATE_DIR, save_json
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +16,7 @@ MIN_SECTION_LENGTH = 100
 MIN_COVERED_KEY_POINTS = 2
 RATE_LIMIT_DELAY_SECONDS = 1.5
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DRAFT_SECTIONS_PATH = PROJECT_ROOT / "project_state" / "draft_sections.json"
+DRAFT_SECTIONS_PATH = STATE_DIR / "draft_sections.json"
 
 STOPWORDS = {
     "the", "a", "an", "of", "in", "to", "and", "for", "on", "with", "as",

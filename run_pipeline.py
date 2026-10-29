@@ -1,7 +1,7 @@
 """Document Production AI — pipeline entry point.
 
 Stages:
-    1. Ingestion: read input/ documents, chunk them, persist to project_state/.
+    1. Ingestion: read input/ documents, chunk them, persist to the state directory.
     2. Retrieval: load chunks and make the keyword search layer available.
     3. Outline generation: build the report structure via LLM.
     4. Section generation: write each section with LLM + retrieval.
@@ -17,9 +17,10 @@ from pathlib import Path
 
 from src import ingestion, retrieval
 from src.metrics import count_resolved_issues
-from src.utils import INPUT_DIR, load_env, load_json
+from src.utils import INPUT_DIR, STATE_DIR, load_env, load_json
 
 REQUIRED_INPUT_FILES = ("company_brief.md", "methodology.md", "market_data.md")
+CHUNKS_PATH = STATE_DIR / "chunks.json"
 
 
 def setup_logging() -> None:
@@ -115,7 +116,7 @@ def run_full_pipeline() -> dict:
     from src.section_generator import SectionGenerator
 
     # Загружаем chunks
-    all_chunks = load_json("project_state/chunks.json")
+    all_chunks = load_json(CHUNKS_PATH)
 
     # Загружаем methodology
     with open(INPUT_DIR / "methodology.md", "r", encoding="utf-8") as f:
