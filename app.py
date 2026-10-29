@@ -8,18 +8,18 @@ import streamlit as st
 from src.upload_utils import format_delta, save_uploaded_files, validate_uploads
 from src.utils import OUTPUT_DIR
 
-# Инициализация состояния сессии
+# Initialize session state
 if 'generation_complete' not in st.session_state:
     st.session_state.generation_complete = False
 
-# Конфигурация страницы
+# Page configuration
 st.set_page_config(
     page_title="Document Production AI",
     page_icon="📄",
     layout="wide"
 )
 
-# Заголовок
+# Title
 st.title("📄 Document Production AI")
 st.markdown("Automated document generation with AI Quality Control")
 
@@ -28,7 +28,7 @@ st.warning(
     "sent to an external LLM service (DeepSeek)."
 )
 
-# Боковая панель с информацией
+# Sidebar with information
 with st.sidebar:
     st.header("How it works")
     st.markdown("""
@@ -42,7 +42,7 @@ with st.sidebar:
 
     st.info("Processing time: 2-4 minutes")
 
-# Экран 1: Загрузка файлов
+# Screen 1: File upload
 st.subheader("Upload Source Documents")
 st.markdown(
     "Upload 2-5 files. `methodology.md` is required; `company_brief.md` and "
@@ -71,11 +71,11 @@ st.caption(
 
 
 
-# Экран с результатами (показывается повторно после re-run страницы)
+# Results screen (shown again after the page re-runs)
 def show_results_page(output):
     st.success("Document generated successfully!")
 
-    # Метрики
+    # Metrics
     col1, col2, col3 = st.columns(3)
 
     with col1:
@@ -99,7 +99,7 @@ def show_results_page(output):
             delta=f"{output['resolution_rate']}%"
         )
 
-    # Предупреждение о оставшихся HIGH issues
+    # Warn about remaining HIGH issues
     if output['remaining_high'] > 0:
         st.warning(
             f"⚠️ {output['remaining_high']} HIGH-severity issues remain "
@@ -108,7 +108,7 @@ def show_results_page(output):
     else:
         st.success("✅ All HIGH-severity issues resolved automatically")
 
-    # Раскрывающийся список оставшихся issues
+    # Expandable list of remaining issues
     if output['remaining_issues']:
         with st.expander(
             f"View remaining issues ({len(output['remaining_issues'])})"
@@ -123,7 +123,7 @@ def show_results_page(output):
                 st.text(f"Suggestion: {issue.get('suggestion', 'N/A')}")
                 st.divider()
 
-    # Кнопки скачивания
+    # Download buttons
     st.subheader("Download")
 
     col1, col2 = st.columns(2)
@@ -152,21 +152,21 @@ def show_results_page(output):
                     use_container_width=True
                 )
 
-    # Показываем ссылку на QC Report
+    # Show the QC Report link
     st.subheader("QC Report Preview")
     if qc_path.exists():
         with open(qc_path, "r", encoding="utf-8") as f:
             st.markdown(f.read()[:2000] + "...")
 
 
-# Если генерация уже завершена — показываем результаты (страница не сбрасывается)
+# If generation has already finished, show the results (page state is preserved)
 if st.session_state.get('generation_complete', False):
     show_results_page(st.session_state['output'])
 
 
-# Кнопка Generate
+# Generate button
 if st.button("🚀 Generate Report", type="primary", disabled=len(uploaded_files) == 0):
-    # Сбрасываем флаг перед новой генерацией
+    # Reset the flag before a new generation
     st.session_state['generation_complete'] = False
 
     upload_error = validate_uploads(uploaded_files)
@@ -174,23 +174,23 @@ if st.button("🚀 Generate Report", type="primary", disabled=len(uploaded_files
         st.error(upload_error)
         st.stop()
 
-    # Сохраняем файлы
+    # Save the files
     save_uploaded_files(uploaded_files)
 
     if project_name:
         os.environ["REPORT_TITLE"] = project_name
 
-    # Экран 2: Обработка (спиннер)
+    # Screen 2: Processing (spinner)
     with st.spinner("Processing (usually a few minutes)..."):
         try:
             from run_pipeline import run_full_pipeline
             output = run_full_pipeline()
 
-            # Сохраняем результат в session_state
+            # Store the result in session_state
             st.session_state['generation_complete'] = True
             st.session_state['output'] = output
 
-            # Экран 3: Результат
+            # Screen 3: Result
             show_results_page(output)
 
         except Exception as e:

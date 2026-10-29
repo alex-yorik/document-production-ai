@@ -107,7 +107,7 @@ def run_full_pipeline() -> dict:
     logging.info(f"Generated outline with {len(outline['outline'])} sections")
     logging.info(f"Estimated total pages: {outline['total_estimated_pages']}")
 
-    # Pretty print outline в консоль
+    # Pretty print the outline to the console
     for section in outline['outline']:
         logging.info(f"  {section['section_number']}. {section['title']}")
 
@@ -115,14 +115,14 @@ def run_full_pipeline() -> dict:
     logging.info("Stage 4: Section Generation")
     from src.section_generator import SectionGenerator
 
-    # Загружаем chunks
+    # Load chunks
     all_chunks = load_json(CHUNKS_PATH)
 
-    # Загружаем methodology
+    # Load methodology
     with open(INPUT_DIR / "methodology.md", "r", encoding="utf-8") as f:
         methodology_text = f.read()
 
-    # Генерируем все разделы
+    # Generate all sections
     generator = SectionGenerator(client)
     sections = generator.generate_all_sections(outline, all_chunks, methodology_text)
 
@@ -153,7 +153,7 @@ def run_full_pipeline() -> dict:
     else:
         logging.info("Stage 6: No HIGH issues found. Skipping revision.")
 
-    # --- Stage 6.5: Final QC Review (после исправлений) ---------------------
+    # --- Stage 6.5: Final QC Review (post-revision) -------------------------
     logging.info("Stage 6.5: Final QC Review (post-revision)")
     qc_report_final = qc_reviewer.review_sections(sections, outline, methodology_text)
 
@@ -163,7 +163,7 @@ def run_full_pipeline() -> dict:
     logging.info(f"  MEDIUM: {sum(1 for i in qc_report_final['issues'] if i['severity'] == 'MEDIUM')}")
     logging.info(f"  LOW: {sum(1 for i in qc_report_final['issues'] if i['severity'] == 'LOW')}")
 
-    # Вычисляем метрики улучшения
+    # Compute improvement metrics
     initial_score = qc_report['overall_score']
     final_score = qc_report_final['overall_score']
     initial_issues = len(qc_report['issues'])
@@ -173,8 +173,8 @@ def run_full_pipeline() -> dict:
     logging.info(f"Quality Improvement: {initial_score} → {final_score} (+{final_score - initial_score})")
     logging.info(f"Issues Resolved: {resolved_issues}/{initial_issues}")
 
-    # ВАЖНО: Максимум 1 дополнительный QC-прогон после revision (без рекурсии)
-    # Если после второго прогона остались HIGH issues — выводим их как "known limitations"
+    # IMPORTANT: at most one extra QC pass after revision (no recursion).
+    # If HIGH issues remain after the second pass, report them as "known limitations".
     if qc_report_final['issues']:
         remaining_high = [i for i in qc_report_final['issues'] if i['severity'] == 'HIGH']
         if remaining_high:
@@ -187,8 +187,8 @@ def run_full_pipeline() -> dict:
     from src.document_assembler import DocumentAssembler
 
     assembler = DocumentAssembler()
-    doc_path = assembler.assemble_document(sections, outline, qc_report_final)  # используем финальный
-    qc_report_path = assembler.generate_quality_report(qc_report, qc_report_final)  # передаём оба для сравнения
+    doc_path = assembler.assemble_document(sections, outline, qc_report_final)  # use the final report
+    qc_report_path = assembler.generate_quality_report(qc_report, qc_report_final)  # pass both for comparison
 
     logging.info(f"Final report saved to: {doc_path}")
     logging.info(f"QC report saved to: {qc_report_path}")
