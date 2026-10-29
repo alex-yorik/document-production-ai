@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 
 from src import ingestion, retrieval
+from src.metrics import count_resolved_issues
 from src.utils import INPUT_DIR, load_env, load_json
 
 REQUIRED_INPUT_FILES = ("company_brief.md", "methodology.md", "market_data.md")
@@ -45,37 +46,6 @@ def validate_input_dir(input_dir: Path) -> None:
             f"Required files: {', '.join(REQUIRED_INPUT_FILES)}. "
             f"See demo/input/ for examples."
         )
-
-
-def count_resolved_issues(draft_issues: list, final_issues: list) -> int:
-    """Считает issues как resolved, если:
-    - issue полностью исчез из final
-    - issue изменил severity на более низкий (HIGH→MEDIUM, MEDIUM→LOW)
-    """
-    severity_order = {'HIGH': 3, 'MEDIUM': 2, 'LOW': 1}
-
-    resolved = 0
-
-    # Сопоставляем issues по section + description
-    for draft in draft_issues:
-        draft_key = f"{draft.get('section')}_{draft.get('description', '')[:50]}"
-        draft_severity = severity_order.get(draft.get('severity'), 0)
-
-        # Ищем соответствующий issue в final
-        found = False
-        for final in final_issues:
-            final_key = f"{final.get('section')}_{final.get('description', '')[:50]}"
-            if draft_key == final_key:
-                final_severity = severity_order.get(final.get('severity'), 0)
-                if final_severity < draft_severity:
-                    resolved += 1  # severity понизился
-                found = True
-                break
-
-        if not found:
-            resolved += 1  # issue полностью исчез
-
-    return resolved
 
 
 def _build_metrics(qc_report: dict, qc_report_final: dict) -> dict:

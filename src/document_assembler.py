@@ -10,6 +10,7 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, RGBColor
 
+from src.metrics import count_improved_sections, count_resolved_issues
 from src.utils import OUTPUT_DIR
 
 logger = logging.getLogger(__name__)
@@ -193,11 +194,14 @@ class DocumentAssembler:
         final_score = qc_report_final.get("overall_score", 0)
         draft_issues = len(qc_report_draft["issues"])
         final_issues = len(qc_report_final["issues"])
-        resolved = draft_issues - final_issues
-
-        draft_sections = {issue.get("section") for issue in qc_report_draft["issues"]}
-        final_sections = {issue.get("section") for issue in qc_report_final["issues"]}
-        resolved_sections = draft_sections - final_sections
+        resolved = count_resolved_issues(
+            qc_report_draft["issues"], qc_report_final["issues"]
+        )
+        resolved_sections = count_improved_sections(
+            qc_report_draft["issues"], qc_report_final["issues"]
+        )
+        score_delta = final_score - draft_score
+        score_delta_text = f"+{score_delta}" if score_delta >= 0 else str(score_delta)
 
         content = f"""# Quality Control Report
 
@@ -218,9 +222,9 @@ class DocumentAssembler:
   - LOW: {self._count_by_severity(qc_report_final["issues"], "LOW")}
 
 ### Improvement Metrics
-- Score Improvement: {draft_score} → {final_score} (**+{final_score - draft_score}**)
+- Score Improvement: {draft_score} → {final_score} (**{score_delta_text}**)
 - Issues Resolved: {resolved}/{draft_issues} (**{int(resolved / draft_issues * 100) if draft_issues > 0 else 0}%**)
-- Sections Improved: {len(resolved_sections)}
+- Sections Improved: {resolved_sections}
 
 ---
 
@@ -232,19 +236,25 @@ class DocumentAssembler:
         content += "\n---\n\n## Final Issues (remaining after revision)\n\n"
 
         for severity in ["HIGH", "MEDIUM", "LOW"]:
-            issues = [i for i in qc_report_final["issues"] if i["severity"] == severity]
+            issues = [
+                i for i in qc_report_final["issues"]
+                if isinstance(i, dict) and i.get("severity") == severity
+            ]
             if issues:
                 content += f"### {severity} Severity ({len(issues)} issues)\n\n"
                 for idx, issue in enumerate(issues, 1):
-                    content += f"{idx}. **{issue['section']}**: {issue['description']}\n"
-                    content += f"   - Location: {issue['location']}\n"
-                    content += f"   - Suggestion: {issue['suggestion']}\n\n"
+                    content += f"{idx}. **{issue.get('section', 'N/A')}**: {issue.get('description', 'N/A')}\n"
+                    content += f"   - Location: {issue.get('location', 'N/A')}\n"
+                    content += f"   - Suggestion: {issue.get('suggestion', 'N/A')}\n\n"
             else:
                 content += f"### {severity} Severity: None\n\n"
 
         content += "\n---\n\n## Revision Actions Taken\n\n"
 
-        remaining_high = sum(1 for i in qc_report_final["issues"] if i["severity"] == "HIGH")
+        remaining_high = sum(
+            1 for i in qc_report_final["issues"]
+            if isinstance(i, dict) and i.get("severity") == "HIGH"
+        )
 
         if remaining_high == 0:
             content += "- All HIGH-severity issues from draft were addressed by AI Revision Loop\n"
