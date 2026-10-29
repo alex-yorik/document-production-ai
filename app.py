@@ -1,11 +1,12 @@
 import os
 import traceback
 
-import streamlit as st
 from pathlib import Path
 
-from run_pipeline import REQUIRED_INPUT_FILES
-from src.utils import INPUT_DIR, OUTPUT_DIR
+import streamlit as st
+
+from src.upload_utils import format_delta, save_uploaded_files, validate_uploads
+from src.utils import OUTPUT_DIR
 
 # Инициализация состояния сессии
 if 'generation_complete' not in st.session_state:
@@ -21,6 +22,11 @@ st.set_page_config(
 # Заголовок
 st.title("📄 Document Production AI")
 st.markdown("Automated document generation with AI Quality Control")
+
+st.warning(
+    "Demo. Do not upload real personal or confidential data. Uploaded text is "
+    "sent to an external LLM service (DeepSeek)."
+)
 
 # Боковая панель с информацией
 with st.sidebar:
@@ -39,8 +45,9 @@ with st.sidebar:
 # Экран 1: Загрузка файлов
 st.subheader("Upload Source Documents")
 st.markdown(
-    "Upload 3-5 files: `company_brief.md`, `market_data.md`, `methodology.md` "
-    "(optional extras are used for retrieval only)"
+    "Upload 2-5 files. `methodology.md` is required; `company_brief.md` and "
+    "`market_data.md` are used by the demo (optional extras are used for "
+    "retrieval only)."
 )
 
 uploaded_files = st.file_uploader(
@@ -59,71 +66,9 @@ project_name = st.text_input(
 )
 
 st.caption(
-    "Required file names: `company_brief.md`, `market_data.md`, `methodology.md`."
+    "Required file name: `methodology.md`."
 )
 
-
-# Функция для очистки входной папки
-def clean_input_dir():
-    input_dir = Path(INPUT_DIR)
-    if input_dir.exists():
-        for file in input_dir.iterdir():
-            if file.is_file():
-                file.unlink()
-
-
-# Функция для сохранения загруженных файлов
-def save_uploaded_files(uploaded_files):
-    clean_input_dir()
-    input_dir = Path(INPUT_DIR)
-    input_dir.mkdir(parents=True, exist_ok=True)
-
-    for uploaded_file in uploaded_files:
-        file_path = input_dir / uploaded_file.name
-        with open(file_path, "wb") as f:
-            f.write(uploaded_file.getvalue())
-
-
-MIN_UPLOAD_FILES = len(REQUIRED_INPUT_FILES)
-MAX_UPLOAD_FILES = 5
-MAX_UPLOAD_BYTES = 10 * 1024 * 1024
-
-
-def validate_uploads(uploaded_files) -> str | None:
-    """Validate uploaded source files before running the pipeline.
-
-    Returns an error message, or None if the uploads are valid.
-    """
-    if not uploaded_files or not (
-        MIN_UPLOAD_FILES <= len(uploaded_files) <= MAX_UPLOAD_FILES
-    ):
-        return f"Upload {MIN_UPLOAD_FILES} to {MAX_UPLOAD_FILES} files..."
-
-    total_bytes = sum(len(f.getvalue()) for f in uploaded_files)
-    if total_bytes > MAX_UPLOAD_BYTES:
-        total_mb = total_bytes / (1024 * 1024)
-        return (
-            f"Total upload size is {total_mb:.1f} MB — the limit is 10 MB. "
-            "Remove a file or reduce its size."
-        )
-
-    missing = [
-        name for name in REQUIRED_INPUT_FILES
-        if not any(f.name == name for f in uploaded_files)
-    ]
-    if missing:
-        return (
-            f"Missing required file(s): {', '.join(missing)}. "
-            f"Required file names: {', '.join(REQUIRED_INPUT_FILES)}. "
-            "See demo/input/ for examples."
-        )
-
-    return None
-
-
-def format_delta(value: int) -> str:
-    """Format a signed delta for the metrics display."""
-    return f"+{value}" if value > 0 else str(value)
 
 
 # Экран с результатами (показывается повторно после re-run страницы)
@@ -236,33 +181,10 @@ if st.button("🚀 Generate Report", type="primary", disabled=len(uploaded_files
         os.environ["REPORT_TITLE"] = project_name
 
     # Экран 2: Обработка (спиннер)
-    with st.spinner("Processing document... This will take 2-4 minutes"):
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-
-        # Запускаем pipeline
+    with st.spinner("Processing (usually a few minutes)..."):
         try:
-            status_text.text("Stage 1-2: Ingestion & Retrieval...")
-            progress_bar.progress(20)
-
-            status_text.text("Stage 3: Outline Generation...")
-            progress_bar.progress(40)
-
-            status_text.text("Stage 4: Section Generation...")
-            progress_bar.progress(60)
-
-            status_text.text("Stage 5-6: QC Review & Revision...")
-            progress_bar.progress(80)
-
-            status_text.text("Stage 7: Document Assembly...")
-            progress_bar.progress(90)
-
-            # Импортируем и запускаем pipeline
             from run_pipeline import run_full_pipeline
             output = run_full_pipeline()
-
-            progress_bar.progress(100)
-            status_text.text("✅ Complete!")
 
             # Сохраняем результат в session_state
             st.session_state['generation_complete'] = True
