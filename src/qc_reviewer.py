@@ -16,6 +16,11 @@ QC_REPORT_PATH = "project_state/qc_report.json"
 
 SEVERITY_ORDER = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
 
+NUMERIC_ISSUE_TYPE = "numeric_traceability_check"
+NUMERIC_PATTERN = re.compile(r"\d+\.?\d*%|\$\d+\.?\d*[BMK]?", re.IGNORECASE)
+_PERCENT_WORD_PATTERN = re.compile(r"\s+percent\b")
+_PERCENT_SPACING_PATTERN = re.compile(r"\s*%")
+
 SYSTEM_PROMPT = """
 You are a strict AI Quality Reviewer for professional consulting reports.
 
@@ -95,34 +100,46 @@ class QCReviewer:
             self.all_chunks = load_json(CHUNKS_PATH)
             logger.debug("Loaded %d chunks from %s", len(self.all_chunks), CHUNKS_PATH)
 
-    def _inject_demo_issue(self, sections: dict) -> dict:
-        """
-        For demo: find a real problem in the generated text.
-        Check for statements that lack support in the source data.
-        """
+    @staticmethod
+    def _normalize_numeric(text: str) -> str:
+        """Normalize numeric notation for case- and whitespace-insensitive matching."""
+        normalized = text.lower()
+        normalized = _PERCENT_WORD_PATTERN.sub("%", normalized)
+        return _PERCENT_SPACING_PATTERN.sub("%", normalized)
+
+    def _combined_source_text(self) -> str:
+        """Concatenate all chunk text in original document order."""
+        return "".join(
+            chunk.get("text", "") if isinstance(chunk, dict) else ""
+            for chunk in self.all_chunks
+        )
+
+    def _check_numeric_traceability(self, sections: dict) -> dict:
+        """Flag statistics in section text that cannot be traced to any source chunk."""
+        self._ensure_chunks()
+
+        source_text = self._normalize_numeric(self._combined_source_text())
         issues = []
 
-        # Check each section for potential hallucinations
         for section_title, section_text in sections.items():
-            # Look for numbers/statistics in the text
-            numbers = re.findall(r"\d+\.?\d*%|\$\d+\.?\d*[BMK]?", section_text)
+            if not isinstance(section_text, str) or not section_text:
+                continue
 
-            # Check whether these numbers exist in the source chunks
-            for number in numbers[:5]:  # Check the first 5 numbers
-                found_in_source = False
-                for chunk in self.all_chunks:
-                    if number in chunk["text"]:
-                        found_in_source = True
-                        break
+            checked_numbers = set()
+            for number in NUMERIC_PATTERN.findall(section_text):
+                normalized = self._normalize_numeric(number)
+                if normalized in checked_numbers:
+                    continue
+                checked_numbers.add(normalized)
 
-                if not found_in_source:
+                if normalized not in source_text:
                     issues.append({
                         "section": section_title,
-                        "issue_type": "potential_hallucination",
+                        "issue_type": NUMERIC_ISSUE_TYPE,
                         "severity": "HIGH",
                         "description": (
                             f"Statistic '{number}' found in text but not verified "
-                            "in source documents"
+                            "in source documents (automated check)"
                         ),
                         "location": f"Section contains: {number}",
                         "suggestion": (
@@ -130,7 +147,6 @@ class QCReviewer:
                             "mark as 'Data not available'"
                         ),
                     })
-                    break  # Only one problem for the demo
 
         return {"issues": issues}
 
@@ -205,8 +221,8 @@ Be strict and thorough. Identify ALL issues, even minor ones.
             }
 
         review = self._normalize_review(review)
-        demo = self._inject_demo_issue(sections)
-        review["issues"] = self._merge_issues(review.get("issues"), demo.get("issues", []))
+        numeric = self._check_numeric_traceability(sections)
+        review["issues"] = self._merge_issues(review.get("issues"), numeric.get("issues", []))
         review["issues"].sort(key=lambda i: SEVERITY_ORDER.get(i.get("severity"), 9))
 
         save_json(review, QC_REPORT_PATH)
@@ -214,14 +230,14 @@ Be strict and thorough. Identify ALL issues, even minor ones.
         return review
 
     @staticmethod
-    def _merge_issues(llm_issues: list, demo_issues: list) -> list:
-        """Combine LLM and demo issues, dropping exact duplicates."""
+    def _merge_issues(llm_issues: list, automated_issues: list) -> list:
+        """Combine LLM and automated issues, dropping exact duplicates."""
         merged = list(llm_issues)
         seen = {
             (i.get("section"), i.get("description"))
             for i in merged if isinstance(i, dict)
         }
-        for issue in demo_issues:
+        for issue in automated_issues:
             key = (issue.get("section"), issue.get("description"))
             if key not in seen:
                 merged.append(issue)
