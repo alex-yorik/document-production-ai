@@ -21,14 +21,17 @@ def test_missing_methodology_md_raises(tmp_path):
     assert "methodology.md" in str(exc_info.value)
 
 
-def test_no_source_documents_raises(tmp_path):
+def test_missing_required_sources_raises(tmp_path):
     (tmp_path / "methodology.md").write_text("# Methodology", encoding="utf-8")
     with pytest.raises(ValueError) as exc_info:
         validate_input_dir(tmp_path)
-    assert "No source documents" in str(exc_info.value)
+    message = str(exc_info.value)
+    assert "company_brief.md" in message
+    assert "market_data.md" in message
 
 
-def test_valid_dir_with_methodology_and_brief_does_not_raise(tmp_path):
+def test_valid_dir_with_all_required_files_does_not_raise(tmp_path):
+    (tmp_path / "company_brief.md").write_text("# Brief", encoding="utf-8")
+    (tmp_path / "market_data.md").write_text("# Market data", encoding="utf-8")
     (tmp_path / "methodology.md").write_text("# Methodology", encoding="utf-8")
-    (tmp_path / "brief.md").write_text("# Brief", encoding="utf-8")
     validate_input_dir(tmp_path)

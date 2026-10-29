@@ -4,6 +4,7 @@ import traceback
 import streamlit as st
 from pathlib import Path
 
+from run_pipeline import REQUIRED_INPUT_FILES
 from src.utils import INPUT_DIR, OUTPUT_DIR
 
 # Инициализация состояния сессии
@@ -37,7 +38,10 @@ with st.sidebar:
 
 # Экран 1: Загрузка файлов
 st.subheader("Upload Source Documents")
-st.markdown("Upload 2-5 files (company brief, market data, methodology)")
+st.markdown(
+    "Upload 3-5 files: `company_brief.md`, `market_data.md`, `methodology.md` "
+    "(optional extras are used for retrieval only)"
+)
 
 uploaded_files = st.file_uploader(
     "Choose files",
@@ -54,7 +58,9 @@ project_name = st.text_input(
     key="project_name"
 )
 
-st.caption("The pipeline requires a file named `methodology.md` among the uploaded files.")
+st.caption(
+    "Required file names: `company_brief.md`, `market_data.md`, `methodology.md`."
+)
 
 
 # Функция для очистки входной папки
@@ -78,7 +84,7 @@ def save_uploaded_files(uploaded_files):
             f.write(uploaded_file.getvalue())
 
 
-MIN_UPLOAD_FILES = 2
+MIN_UPLOAD_FILES = len(REQUIRED_INPUT_FILES)
 MAX_UPLOAD_FILES = 5
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
@@ -91,7 +97,7 @@ def validate_uploads(uploaded_files) -> str | None:
     if not uploaded_files or not (
         MIN_UPLOAD_FILES <= len(uploaded_files) <= MAX_UPLOAD_FILES
     ):
-        return "Upload 2 to 5 files..."
+        return f"Upload {MIN_UPLOAD_FILES} to {MAX_UPLOAD_FILES} files..."
 
     total_bytes = sum(len(f.getvalue()) for f in uploaded_files)
     if total_bytes > MAX_UPLOAD_BYTES:
@@ -101,10 +107,15 @@ def validate_uploads(uploaded_files) -> str | None:
             "Remove a file or reduce its size."
         )
 
-    if not any(f.name == "methodology.md" for f in uploaded_files):
+    missing = [
+        name for name in REQUIRED_INPUT_FILES
+        if not any(f.name == name for f in uploaded_files)
+    ]
+    if missing:
         return (
-            "methodology.md is required among the uploaded files. "
-            "The pipeline expects a file named `methodology.md`."
+            f"Missing required file(s): {', '.join(missing)}. "
+            f"Required file names: {', '.join(REQUIRED_INPUT_FILES)}. "
+            "See demo/input/ for examples."
         )
 
     return None

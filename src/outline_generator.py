@@ -3,6 +3,7 @@
 import json
 import logging
 
+from run_pipeline import REQUIRED_INPUT_FILES
 from src.llm_client import DeepSeekClient, format_system_message, format_user_message
 from src.utils import INPUT_DIR, STATE_DIR, save_json
 
@@ -177,15 +178,18 @@ def load_input_files() -> tuple[str, str, str]:
     """Read the three input documents used for outline generation.
 
     Returns:
-        Tuple of (company_brief, methodology, market_data) texts. A missing or
-        unreadable file is replaced with an empty string and logged.
+        Tuple of (company_brief, methodology, market_data) texts.
+
+    Raises:
+        ValueError: If a required input file is missing or cannot be read.
     """
     texts: list[str] = []
-    for filename in ("company_brief.md", "methodology.md", "market_data.md"):
+    for filename in REQUIRED_INPUT_FILES:
         path = INPUT_DIR / filename
         try:
             texts.append(path.read_text(encoding="utf-8"))
         except (OSError, UnicodeDecodeError) as exc:
-            logger.warning("Could not read input file %s: %s", path, exc)
-            texts.append("")
+            raise ValueError(
+                f"Could not read required input file '{filename}' ({path}): {exc}"
+            ) from exc
     return texts[0], texts[1], texts[2]

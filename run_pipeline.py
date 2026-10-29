@@ -18,6 +18,8 @@ from pathlib import Path
 from src import ingestion, retrieval
 from src.utils import INPUT_DIR, load_env, load_json
 
+REQUIRED_INPUT_FILES = ("company_brief.md", "methodology.md", "market_data.md")
+
 
 def setup_logging() -> None:
     """Configure console logging with timestamps."""
@@ -36,17 +38,12 @@ def validate_input_dir(input_dir: Path) -> None:
             f"INPUT_DIR '{input_dir}' does not exist. "
             f"Create it or run the demo: INPUT_DIR=demo/input python run_pipeline.py"
         )
-    if not (input_dir / "methodology.md").exists():
+    missing = [name for name in REQUIRED_INPUT_FILES if not (input_dir / name).is_file()]
+    if missing:
         raise ValueError(
-            f"'{input_dir}/methodology.md' is required. "
-            f"See demo/input/methodology.md for an example."
-        )
-    sources = [p for p in input_dir.iterdir()
-               if p.suffix in (".md", ".txt") and p.name != "methodology.md"]
-    if not sources:
-        raise ValueError(
-            f"No source documents in '{input_dir}'. "
-            f"Add at least one .md/.txt file besides methodology.md."
+            f"Missing required input file(s) in '{input_dir}': {', '.join(missing)}. "
+            f"Required files: {', '.join(REQUIRED_INPUT_FILES)}. "
+            f"See demo/input/ for examples."
         )
 
 
