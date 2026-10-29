@@ -24,4 +24,7 @@ The pipeline reads documents from `demo/input/` (instead of the default
 `output/QC_Report.md`.
 
 `demo/expected/` shows what a real run produced on this dataset, so you can
-compare your own result with a verified baseline.
+compare your own result with a historical baseline.
+
+> Expected outputs were generated before fixes PA-02/PA-05
+> (historical record dated 2026-10-08). Current results: see docs/reports/portfolio-audit-report.md
