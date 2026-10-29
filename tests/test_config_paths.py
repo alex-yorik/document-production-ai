@@ -48,13 +48,9 @@ def test_qc_reviewer_writes_report_after_chdir(monkeypatch, tmp_path):
     report_path = tmp_path / "qc_report.json"
     monkeypatch.setattr(qc_reviewer, "QC_REPORT_PATH", report_path)
     monkeypatch.chdir(tmp_path)
-    reviewer = QCReviewer(
-        client=_FakeJsonClient(), all_chunks=[{"text": "Revenue grew 42%."}]
-    )
+    reviewer = QCReviewer(client=_FakeJsonClient(), all_chunks=[{"text": "Revenue grew 42%."}])
 
-    review = reviewer.review_sections(
-        {"Summary": "Revenue grew 42%."}, {"outline": []}, ""
-    )
+    review = reviewer.review_sections({"Summary": "Revenue grew 42%."}, {"outline": []}, "")
 
     assert review["overall_score"] == 88
     saved = json.loads(report_path.read_text(encoding="utf-8"))
@@ -75,9 +71,7 @@ def test_revision_loop_writes_draft_after_chdir(monkeypatch, tmp_path):
     draft_path = tmp_path / "draft_sections.json"
     monkeypatch.setattr(revision_loop, "DRAFT_SECTIONS_PATH", draft_path)
     monkeypatch.chdir(tmp_path)
-    loop = RevisionLoop(
-        client=_FakeTextClient(), all_chunks=[], methodology_text=""
-    )
+    loop = RevisionLoop(client=_FakeTextClient(), all_chunks=[], methodology_text="")
     sections = {"Summary": "old"}
 
     fixed = loop._revise_section(
@@ -105,9 +99,7 @@ def _make_client(
 
 
 def test_client_reads_env_after_module_import(monkeypatch):
-    client = _make_client(
-        monkeypatch, "https://late.example/v1", "late-model"
-    )
+    client = _make_client(monkeypatch, "https://late.example/v1", "late-model")
 
     assert client.base_url == "https://late.example/v1"
     assert client.model == "late-model"
@@ -132,9 +124,7 @@ def test_chat_completion_json_parses_once_and_raises_value_error(monkeypatch):
     monkeypatch.setattr(llm_client.json, "loads", counting_loads)
 
     with pytest.raises(ValueError, match="Could not parse model output as JSON"):
-        client.chat_completion_json(
-            [{"role": "user", "content": "hi"}]
-        )
+        client.chat_completion_json([{"role": "user", "content": "hi"}])
 
     assert len(calls) == 1
 
@@ -144,7 +134,7 @@ def test_chat_completion_json_parses_once_and_raises_value_error(monkeypatch):
     [
         ('```json\n{"a": 1}\n```', '{"a": 1}'),
         ('```\n{"a": 1}\n```', '{"a": 1}'),
-        ('  ```json\n[1, 2]\n```  ', '[1, 2]'),
+        ("  ```json\n[1, 2]\n```  ", "[1, 2]"),
     ],
 )
 def test_strip_json_fences(raw, expected):
@@ -161,9 +151,7 @@ def test_model_none_uses_instance_model(monkeypatch):
 
     monkeypatch.setattr(client, "chat_completion", fake_completion)
 
-    result = client.chat_completion_json(
-        [{"role": "user", "content": "hi"}], model=None
-    )
+    result = client.chat_completion_json([{"role": "user", "content": "hi"}], model=None)
 
     assert result == {"ok": True}
     assert captured["model"] == "instance-model"

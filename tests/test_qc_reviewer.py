@@ -40,9 +40,7 @@ class TestNumericTraceability:
     def test_number_split_across_chunk_boundary_is_found(self):
         reviewer = _reviewer([_chunk("Revenue reached 7."), _chunk("5% growth.")])
 
-        review = reviewer._check_numeric_traceability(
-            {"Summary": "Revenue reached 7.5%."}
-        )
+        review = reviewer._check_numeric_traceability({"Summary": "Revenue reached 7.5%."})
 
         assert review["issues"] == []
 

@@ -154,9 +154,7 @@ Generate the outline following the methodology and brief requirements.
                 )
                 self._save_raw_response(data)
                 if not self._validate_structure(data):
-                    raise ValueError(
-                        "LLM response has no 'outline' key or it is not a list"
-                    )
+                    raise ValueError("LLM response has no 'outline' key or it is not a list")
                 save_json(data, OUTLINE_PATH)
                 self._validate_sections(data)
                 logger.info("Generated outline with %d sections", len(data["outline"]))
@@ -169,9 +167,7 @@ Generate the outline following the methodology and brief requirements.
                     MAX_ATTEMPTS,
                     exc,
                 )
-        raise RuntimeError(
-            f"Outline generation failed after {MAX_ATTEMPTS} attempts: {last_error}"
-        )
+        raise RuntimeError(f"Outline generation failed after {MAX_ATTEMPTS} attempts: {last_error}")
 
 
 def load_input_files() -> tuple[str, str, str]:
@@ -189,7 +185,5 @@ def load_input_files() -> tuple[str, str, str]:
         try:
             texts.append(path.read_text(encoding="utf-8"))
         except (OSError, UnicodeDecodeError) as exc:
-            raise ValueError(
-                f"Could not read required input file '{filename}' ({path}): {exc}"
-            ) from exc
+            raise ValueError(f"Could not read required input file '{filename}' ({path}): {exc}") from exc
     return texts[0], texts[1], texts[2]

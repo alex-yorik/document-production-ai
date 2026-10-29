@@ -43,19 +43,13 @@ def count_resolved_issues(draft_issues: list, final_issues: list) -> int:
     introduced in the final review cannot lower the number below zero.
     """
     final_by_key = _index_final(final_issues)
-    return sum(
-        1
-        for draft in draft_issues
-        if isinstance(draft, dict) and _is_resolved(draft, final_by_key)
-    )
+    return sum(1 for draft in draft_issues if isinstance(draft, dict) and _is_resolved(draft, final_by_key))
 
 
 def count_improved_sections(draft_issues: list, final_issues: list) -> int:
     """Count distinct sections with at least one resolved draft issue."""
     final_by_key = _index_final(final_issues)
     improved = {
-        draft.get("section")
-        for draft in draft_issues
-        if isinstance(draft, dict) and _is_resolved(draft, final_by_key)
+        draft.get("section") for draft in draft_issues if isinstance(draft, dict) and _is_resolved(draft, final_by_key)
     }
     return len(improved)

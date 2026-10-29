@@ -17,12 +17,7 @@ def _build_doc(text: str, tmp_path):
 
 class TestMarkdownTable:
     def test_table_has_header_and_data_rows_without_separator(self, tmp_path):
-        markdown = (
-            "| Name | Value |\n"
-            "| --- | --- |\n"
-            "| Alpha | 1 |\n"
-            "| Beta | 2 |\n"
-        )
+        markdown = "| Name | Value |\n| --- | --- |\n| Alpha | 1 |\n| Beta | 2 |\n"
         doc = _build_doc(markdown, tmp_path)
 
         assert len(doc.tables) == 1
@@ -34,12 +29,7 @@ class TestMarkdownTable:
         assert [cell.text for cell in table.rows[2].cells] == ["Beta", "2"]
 
     def test_table_cells_have_no_edge_pipes_or_extra_spaces(self, tmp_path):
-        markdown = (
-            "|  Name  |  Value  |\n"
-            "| :---: | --- |\n"
-            "|   Alpha   |   1   |\n"
-            "|  Beta  |  2  |\n"
-        )
+        markdown = "|  Name  |  Value  |\n| :---: | --- |\n|   Alpha   |   1   |\n|  Beta  |  2  |\n"
         doc = _build_doc(markdown, tmp_path)
 
         table = doc.tables[0]
@@ -49,11 +39,7 @@ class TestMarkdownTable:
                 assert cell.text == cell.text.strip()
 
     def test_ragged_table_pads_missing_cells(self, tmp_path):
-        markdown = (
-            "| A | B | C |\n"
-            "| --- | --- | --- |\n"
-            "| 1 | 2 |\n"
-        )
+        markdown = "| A | B | C |\n| --- | --- | --- |\n| 1 | 2 |\n"
         doc = _build_doc(markdown, tmp_path)
 
         table = doc.tables[0]

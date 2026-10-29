@@ -166,9 +166,7 @@ class DeepSeekClient:
             ]
         else:
             full_messages = list(messages)
-        raw = self.chat_completion(
-            full_messages, model=model, temperature=temperature, max_tokens=max_tokens
-        )
+        raw = self.chat_completion(full_messages, model=model, temperature=temperature, max_tokens=max_tokens)
         cleaned = _strip_json_fences(raw)
         try:
             return json.loads(cleaned)

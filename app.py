@@ -8,15 +8,11 @@ from src.upload_utils import format_delta, save_uploaded_files, validate_uploads
 from src.utils import OUTPUT_DIR
 
 # Initialize session state
-if 'generation_complete' not in st.session_state:
+if "generation_complete" not in st.session_state:
     st.session_state.generation_complete = False
 
 # Page configuration
-st.set_page_config(
-    page_title="Document Production AI",
-    page_icon="📄",
-    layout="wide"
-)
+st.set_page_config(page_title="Document Production AI", page_icon="📄", layout="wide")
 
 # Title
 st.title("📄 Document Production AI")
@@ -49,25 +45,13 @@ st.markdown(
     "retrieval only)."
 )
 
-uploaded_files = st.file_uploader(
-    "Choose files",
-    type=["md", "txt"],
-    accept_multiple_files=True,
-    key="file_uploader"
-)
+uploaded_files = st.file_uploader("Choose files", type=["md", "txt"], accept_multiple_files=True, key="file_uploader")
 
 st.warning("Generating a report replaces all files currently stored in input/.")
 
-project_name = st.text_input(
-    "Project name (optional)",
-    os.getenv("REPORT_TITLE", ""),
-    key="project_name"
-)
+project_name = st.text_input("Project name (optional)", os.getenv("REPORT_TITLE", ""), key="project_name")
 
-st.caption(
-    "Required file name: `methodology.md`."
-)
-
+st.caption("Required file name: `methodology.md`.")
 
 
 # Results screen (shown again after the page re-runs)
@@ -75,48 +59,36 @@ def _show_metrics(output):
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.metric(
-            label="Draft Quality Score",
-            value=f"{output['draft_score']}/100",
-            delta=None
-        )
+        st.metric(label="Draft Quality Score", value=f"{output['draft_score']}/100", delta=None)
 
     with col2:
         st.metric(
             label="Final Quality Score",
             value=f"{output['final_score']}/100",
-            delta=format_delta(output['final_score'] - output['draft_score'])
+            delta=format_delta(output["final_score"] - output["draft_score"]),
         )
 
     with col3:
         st.metric(
             label="Issues Resolved",
             value=f"{output['resolved_issues']}/{output['draft_issues']}",
-            delta=f"{output['resolution_rate']}%"
+            delta=f"{output['resolution_rate']}%",
         )
 
     # Warn about remaining HIGH issues
-    if output['remaining_high'] > 0:
-        st.warning(
-            f"⚠️ {output['remaining_high']} HIGH-severity issues remain "
-            "— flagged for human review"
-        )
+    if output["remaining_high"] > 0:
+        st.warning(f"⚠️ {output['remaining_high']} HIGH-severity issues remain — flagged for human review")
     else:
         st.success("✅ All HIGH-severity issues resolved automatically")
 
 
 def _show_remaining_issues(output):
-    if not output['remaining_issues']:
+    if not output["remaining_issues"]:
         return
-    with st.expander(
-        f"View remaining issues ({len(output['remaining_issues'])})"
-    ):
-        for idx, issue in enumerate(output['remaining_issues'], 1):
+    with st.expander(f"View remaining issues ({len(output['remaining_issues'])})"):
+        for idx, issue in enumerate(output["remaining_issues"], 1):
             st.markdown(f"**{idx}. {issue.get('section', 'N/A')}**")
-            st.text(
-                f"Type: {issue.get('severity', 'N/A')} - "
-                f"{issue.get('issue_type', 'N/A')}"
-            )
+            st.text(f"Type: {issue.get('severity', 'N/A')} - {issue.get('issue_type', 'N/A')}")
             st.text(f"Description: {issue.get('description', 'N/A')}")
             st.text(f"Suggestion: {issue.get('suggestion', 'N/A')}")
             st.divider()
@@ -136,7 +108,7 @@ def _show_downloads():
                     data=f.read(),
                     file_name="Final_Report.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    use_container_width=True
+                    use_container_width=True,
                 )
 
     qc_path = Path(OUTPUT_DIR) / "QC_Report.md"
@@ -148,7 +120,7 @@ def _show_downloads():
                     data=f.read(),
                     file_name="QC_Report.md",
                     mime="text/markdown",
-                    use_container_width=True
+                    use_container_width=True,
                 )
 
     # Show the QC Report link
@@ -166,14 +138,14 @@ def show_results_page(output):
 
 
 # If generation has already finished, show the results (page state is preserved)
-if st.session_state.get('generation_complete', False):
-    show_results_page(st.session_state['output'])
+if st.session_state.get("generation_complete", False):
+    show_results_page(st.session_state["output"])
 
 
 # Generate button
 if st.button("🚀 Generate Report", type="primary", disabled=len(uploaded_files) == 0):
     # Reset the flag before a new generation
-    st.session_state['generation_complete'] = False
+    st.session_state["generation_complete"] = False
 
     upload_error = validate_uploads(uploaded_files)
     if upload_error:
@@ -190,11 +162,12 @@ if st.button("🚀 Generate Report", type="primary", disabled=len(uploaded_files
     with st.spinner("Processing (usually a few minutes)..."):
         try:
             from run_pipeline import run_full_pipeline
+
             output = run_full_pipeline()
 
             # Store the result in session_state
-            st.session_state['generation_complete'] = True
-            st.session_state['output'] = output
+            st.session_state["generation_complete"] = True
+            st.session_state["output"] = output
 
             # Screen 3: Result
             show_results_page(output)

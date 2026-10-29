@@ -65,8 +65,7 @@ def _build_metrics(qc_report: dict, qc_report_final: dict) -> dict:
         "final_issues": final_issues,
         "resolved_issues": resolved,
         "remaining_high": sum(
-            1 for i in qc_report_final.get("issues", [])
-            if isinstance(i, dict) and i.get("severity") == "HIGH"
+            1 for i in qc_report_final.get("issues", []) if isinstance(i, dict) and i.get("severity") == "HIGH"
         ),
         "remaining_issues": qc_report_final.get("issues", []),
         "resolution_rate": int(resolved / draft_issues * 100) if draft_issues > 0 else 0,
@@ -96,14 +95,12 @@ def _stage_outline(client: DeepSeekClient) -> dict:
     logging.info(f"Estimated total pages: {outline['total_estimated_pages']}")
 
     # Pretty print the outline to the console
-    for section in outline['outline']:
+    for section in outline["outline"]:
         logging.info(f"  {section['section_number']}. {section['title']}")
     return outline
 
 
-def _stage_sections(
-    client: DeepSeekClient, outline: dict
-) -> tuple[dict, list, str]:
+def _stage_sections(client: DeepSeekClient, outline: dict) -> tuple[dict, list, str]:
     """Stage 4: generate all report sections."""
     logging.info("Stage 4: Section Generation")
     from src.section_generator import SectionGenerator
@@ -120,9 +117,7 @@ def _stage_sections(
     return sections, all_chunks, methodology_text
 
 
-def _stage_review(
-    client: DeepSeekClient, sections: dict, outline: dict, methodology_text: str
-) -> tuple[object, dict]:
+def _stage_review(client: DeepSeekClient, sections: dict, outline: dict, methodology_text: str) -> tuple[object, dict]:
     """Stage 5: run the AI quality review."""
     logging.info("Stage 5: AI Quality Review")
     from src.qc_reviewer import QCReviewer
@@ -168,28 +163,24 @@ def _stage_revision(
     logging.info(f"  MEDIUM: {sum(1 for i in qc_report_final['issues'] if i['severity'] == 'MEDIUM')}")
     logging.info(f"  LOW: {sum(1 for i in qc_report_final['issues'] if i['severity'] == 'LOW')}")
 
-    initial_score = qc_report['overall_score']
-    final_score = qc_report_final['overall_score']
-    initial_issues = len(qc_report['issues'])
-    resolved_issues = count_resolved_issues(qc_report['issues'], qc_report_final['issues'])
+    initial_score = qc_report["overall_score"]
+    final_score = qc_report_final["overall_score"]
+    initial_issues = len(qc_report["issues"])
+    resolved_issues = count_resolved_issues(qc_report["issues"], qc_report_final["issues"])
 
     logging.info(f"Quality Improvement: {initial_score} → {final_score} (+{final_score - initial_score})")
     logging.info(f"Issues Resolved: {resolved_issues}/{initial_issues}")
 
     # IMPORTANT: at most one extra QC pass after revision (no recursion).
     # If HIGH issues remain after the second pass, report them as "known limitations".
-    if qc_report_final['issues']:
-        remaining_high = [i for i in qc_report_final['issues'] if i['severity'] == 'HIGH']
+    if qc_report_final["issues"]:
+        remaining_high = [i for i in qc_report_final["issues"] if i["severity"] == "HIGH"]
         if remaining_high:
-            logging.warning(
-                f"{len(remaining_high)} HIGH issues remain after revision — marked as known limitations"
-            )
+            logging.warning(f"{len(remaining_high)} HIGH issues remain after revision — marked as known limitations")
     return sections, qc_report_final
 
 
-def _stage_assemble(
-    sections: dict, outline: dict, qc_report: dict, qc_report_final: dict
-) -> dict:
+def _stage_assemble(sections: dict, outline: dict, qc_report: dict, qc_report_final: dict) -> dict:
     """Stage 7: assemble the DOCX report and QC markdown, then build metrics."""
     logging.info("Stage 7: Document Assembly")
     from src.document_assembler import DocumentAssembler

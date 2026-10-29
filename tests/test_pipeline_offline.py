@@ -34,9 +34,7 @@ def test_pipeline_offline(offline_env, fake_client_class, monkeypatch):
     ("high_issues", "revision_expected"),
     [(True, True), (False, False)],
 )
-def test_revision_depends_on_high_issues(
-    offline_env, fake_client_class, monkeypatch, high_issues, revision_expected
-):
+def test_revision_depends_on_high_issues(offline_env, fake_client_class, monkeypatch, high_issues, revision_expected):
     client = fake_client_class(high_issues=high_issues)
     monkeypatch.setattr(run_pipeline, "DeepSeekClient", lambda: client)
 
@@ -47,9 +45,7 @@ def test_revision_depends_on_high_issues(
         assert metrics["draft_issues"] >= 1
 
 
-def test_qc_exception_is_contained_with_zero_score(
-    offline_env, fake_client_class, monkeypatch, caplog
-):
+def test_qc_exception_is_contained_with_zero_score(offline_env, fake_client_class, monkeypatch, caplog):
     client = fake_client_class(qc_raises=True)
     monkeypatch.setattr(run_pipeline, "DeepSeekClient", lambda: client)
 
@@ -58,7 +54,4 @@ def test_qc_exception_is_contained_with_zero_score(
 
     assert metrics["final_score"] == 0
     assert client.revision_calls == 0
-    assert any(
-        record.levelno >= logging.WARNING and "QC review" in record.getMessage()
-        for record in caplog.records
-    )
+    assert any(record.levelno >= logging.WARNING and "QC review" in record.getMessage() for record in caplog.records)

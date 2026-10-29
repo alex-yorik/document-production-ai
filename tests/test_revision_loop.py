@@ -47,10 +47,14 @@ def _run(tmp_path, monkeypatch, client, issues, sections=None, max_attempts=2):
     draft_path = tmp_path / "draft_sections.json"
     monkeypatch.setattr(revision_loop, "DRAFT_SECTIONS_PATH", draft_path)
     loop = revision_loop.RevisionLoop(client, [{"text": "market data"}], "methodology")
-    current = sections if sections is not None else {
-        "Executive Summary": "old",
-        "Market Overview": "old",
-    }
+    current = (
+        sections
+        if sections is not None
+        else {
+            "Executive Summary": "old",
+            "Market Overview": "old",
+        }
+    )
     return loop.fix_sections(current, OUTLINE, issues, max_attempts=max_attempts)
 
 

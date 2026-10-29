@@ -44,8 +44,7 @@ def file_violations(path: Path) -> list[str]:
         length = node.end_lineno - node.lineno + 1
         if length > MAX_FUNCTION_LINES:
             violations.append(
-                f"{path}:{node.lineno}: function '{node.name}' has {length} lines "
-                f"(max {MAX_FUNCTION_LINES})"
+                f"{path}:{node.lineno}: function '{node.name}' has {length} lines (max {MAX_FUNCTION_LINES})"
             )
     return violations
 

@@ -16,25 +16,42 @@ def test_report_and_build_metrics_agree_on_resolved(tmp_path, monkeypatch):
     draft = {
         "overall_score": 60,
         "issues": [
-            {"section": "1", "description": "Missing data", "severity": "HIGH",
-             "location": "p.1", "suggestion": "add"},
-            {"section": "2", "description": "Vague wording", "severity": "MEDIUM",
-             "location": "p.2", "suggestion": "clarify"},
-            {"section": "3", "description": "Minor typo", "severity": "LOW",
-             "location": "p.3", "suggestion": "fix"},
+            {"section": "1", "description": "Missing data", "severity": "HIGH", "location": "p.1", "suggestion": "add"},
+            {
+                "section": "2",
+                "description": "Vague wording",
+                "severity": "MEDIUM",
+                "location": "p.2",
+                "suggestion": "clarify",
+            },
+            {"section": "3", "description": "Minor typo", "severity": "LOW", "location": "p.3", "suggestion": "fix"},
         ],
     }
     final = {
         "overall_score": 70,
         "issues": [
-            {"section": "1", "description": "Missing data", "severity": "MEDIUM",
-             "location": "p.1", "suggestion": "add"},
-            {"section": "3", "description": "Minor typo", "severity": "LOW",
-             "location": "p.3", "suggestion": "fix"},
-            {"section": "4", "description": "New HIGH issue", "severity": "HIGH",
-             "location": "p.4", "suggestion": "redo"},
-            {"section": "5", "description": "Another new issue", "severity": "HIGH",
-             "location": "p.5", "suggestion": "redo"},
+            {
+                "section": "1",
+                "description": "Missing data",
+                "severity": "MEDIUM",
+                "location": "p.1",
+                "suggestion": "add",
+            },
+            {"section": "3", "description": "Minor typo", "severity": "LOW", "location": "p.3", "suggestion": "fix"},
+            {
+                "section": "4",
+                "description": "New HIGH issue",
+                "severity": "HIGH",
+                "location": "p.4",
+                "suggestion": "redo",
+            },
+            {
+                "section": "5",
+                "description": "Another new issue",
+                "severity": "HIGH",
+                "location": "p.5",
+                "suggestion": "redo",
+            },
         ],
     }
     metrics_resolved = _build_metrics(draft, final)["resolved_issues"]

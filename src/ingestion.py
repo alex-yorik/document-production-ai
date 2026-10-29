@@ -28,8 +28,7 @@ def read_file(file_path: str | Path) -> str:
     path = Path(file_path)
     if path.suffix.lower() not in SUPPORTED_EXTENSIONS:
         raise ValueError(
-            f"Unsupported file extension '{path.suffix}' for {path.name}; "
-            f"supported: {sorted(SUPPORTED_EXTENSIONS)}"
+            f"Unsupported file extension '{path.suffix}' for {path.name}; supported: {sorted(SUPPORTED_EXTENSIONS)}"
         )
     return path.read_text(encoding="utf-8")
 

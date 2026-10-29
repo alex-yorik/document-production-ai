@@ -109,10 +109,7 @@ class QCReviewer:
 
     def _combined_source_text(self) -> str:
         """Concatenate all chunk text in original document order."""
-        return "".join(
-            chunk.get("text", "") if isinstance(chunk, dict) else ""
-            for chunk in self.all_chunks
-        )
+        return "".join(chunk.get("text", "") if isinstance(chunk, dict) else "" for chunk in self.all_chunks)
 
     def _check_numeric_traceability(self, sections: dict) -> dict:
         """Flag statistics in section text that cannot be traced to any source chunk."""
@@ -133,20 +130,21 @@ class QCReviewer:
                 checked_numbers.add(normalized)
 
                 if normalized not in source_text:
-                    issues.append({
-                        "section": section_title,
-                        "issue_type": NUMERIC_ISSUE_TYPE,
-                        "severity": "HIGH",
-                        "description": (
-                            f"Statistic '{number}' found in text but not verified "
-                            "in source documents (automated check)"
-                        ),
-                        "location": f"Section contains: {number}",
-                        "suggestion": (
-                            f"Verify statistic '{number}' against source data or "
-                            "mark as 'Data not available'"
-                        ),
-                    })
+                    issues.append(
+                        {
+                            "section": section_title,
+                            "issue_type": NUMERIC_ISSUE_TYPE,
+                            "severity": "HIGH",
+                            "description": (
+                                f"Statistic '{number}' found in text but not verified "
+                                "in source documents (automated check)"
+                            ),
+                            "location": f"Section contains: {number}",
+                            "suggestion": (
+                                f"Verify statistic '{number}' against source data or mark as 'Data not available'"
+                            ),
+                        }
+                    )
 
         return {"issues": issues}
 
@@ -194,16 +192,10 @@ Be strict and thorough. Identify ALL issues, even minor ones.
     def _request_review(self, messages: list[dict]) -> dict:
         """Call the reviewer, retrying once with a larger token budget on failure."""
         try:
-            return self.client.chat_completion_json(
-                messages, temperature=QC_TEMPERATURE, max_tokens=QC_MAX_TOKENS
-            )
+            return self.client.chat_completion_json(messages, temperature=QC_TEMPERATURE, max_tokens=QC_MAX_TOKENS)
         except Exception as exc:  # noqa: BLE001 — retry once on any client failure
-            logger.warning(
-                "QC review attempt 1 failed (%s); retrying with larger token budget", exc
-            )
-        return self.client.chat_completion_json(
-            messages, temperature=QC_TEMPERATURE, max_tokens=QC_MAX_TOKENS * 2
-        )
+            logger.warning("QC review attempt 1 failed (%s); retrying with larger token budget", exc)
+        return self.client.chat_completion_json(messages, temperature=QC_TEMPERATURE, max_tokens=QC_MAX_TOKENS * 2)
 
     def review_sections(self, sections: dict, outline: dict, methodology_text: str) -> dict:
         """Run the QC review and persist the report to the state directory."""
@@ -233,10 +225,7 @@ Be strict and thorough. Identify ALL issues, even minor ones.
     def _merge_issues(llm_issues: list, automated_issues: list) -> list:
         """Combine LLM and automated issues, dropping exact duplicates."""
         merged = list(llm_issues)
-        seen = {
-            (i.get("section"), i.get("description"))
-            for i in merged if isinstance(i, dict)
-        }
+        seen = {(i.get("section"), i.get("description")) for i in merged if isinstance(i, dict)}
         for issue in automated_issues:
             key = (issue.get("section"), issue.get("description"))
             if key not in seen:
@@ -251,7 +240,4 @@ Be strict and thorough. Identify ALL issues, even minor ones.
         issues = review.get("issues")
         if not isinstance(issues, list):
             return []
-        return [
-            issue for issue in issues
-            if isinstance(issue, dict) and issue.get("severity") == "HIGH"
-        ]
+        return [issue for issue in issues if isinstance(issue, dict) and issue.get("severity") == "HIGH"]

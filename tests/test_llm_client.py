@@ -65,9 +65,7 @@ def test_chat_completion_success(monkeypatch):
 
     monkeypatch.setattr(llm_client.requests, "post", fake_post)
 
-    result = client.chat_completion(
-        [llm_client.format_user_message("hi")], temperature=0.1, max_tokens=10
-    )
+    result = client.chat_completion([llm_client.format_user_message("hi")], temperature=0.1, max_tokens=10)
 
     assert result == "answer"
     assert captured["url"] == client.endpoint
@@ -151,9 +149,7 @@ def test_api_key_is_not_logged_or_leaked_in_exception(monkeypatch, caplog):
     monkeypatch.setattr(
         llm_client.requests,
         "post",
-        lambda *args, **kwargs: (_ for _ in ()).throw(
-            requests.RequestException("network down")
-        ),
+        lambda *args, **kwargs: (_ for _ in ()).throw(requests.RequestException("network down")),
     )
 
     with caplog.at_level(logging.DEBUG), pytest.raises(RuntimeError) as exc_info:
@@ -203,9 +199,9 @@ def test_chat_completion_json_raises_value_error_on_invalid_json(monkeypatch):
     ("raw", "expected"),
     [
         ("  plain  ", "plain"),
-        ("```json\n{\"a\": 1}\n```", '{"a": 1}'),
-        ("```\n{\"a\": 1}\n```", '{"a": 1}'),
-        ("```json\n{\"a\": 1}", '{"a": 1}'),
+        ('```json\n{"a": 1}\n```', '{"a": 1}'),
+        ('```\n{"a": 1}\n```', '{"a": 1}'),
+        ('```json\n{"a": 1}', '{"a": 1}'),
     ],
 )
 def test_strip_json_fences(raw, expected):

@@ -38,9 +38,7 @@ def test_get_relevant_chunks_for_section_strips_special_characters():
         {"text": "other content"},
     ]
 
-    results = retrieval.get_relevant_chunks_for_section(
-        "Market: Overview! (2024)", chunks, top_k=1
-    )
+    results = retrieval.get_relevant_chunks_for_section("Market: Overview! (2024)", chunks, top_k=1)
 
     assert results == ["market overview data"]
 
@@ -52,9 +50,7 @@ def test_get_relevant_chunks_for_section_only_special_characters():
 
 
 def test_format_context_joins_chunks():
-    assert retrieval.format_context(["one", "two"]) == (
-        "Relevant context:\none\n\n---\n\ntwo"
-    )
+    assert retrieval.format_context(["one", "two"]) == ("Relevant context:\none\n\n---\n\ntwo")
 
 
 def test_format_context_empty_list():

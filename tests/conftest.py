@@ -49,8 +49,7 @@ SECTION_TEXT = (
     "Market growth projections, entry strategy options and key risks assessment "
     "are covered together with market size estimates, growth drivers analysis and "
     "competitive pressure overview. This section contains no numeric statistics, "
-    "so the automated traceability check stays clean. "
-    + "Detailed qualitative analysis follows. " * 5
+    "so the automated traceability check stays clean. " + "Detailed qualitative analysis follows. " * 5
 )
 
 HIGH_ISSUE = {
@@ -143,9 +142,7 @@ def offline_env(monkeypatch, tmp_path) -> dict[str, Path]:
     monkeypatch.setattr(outline_generator, "INPUT_DIR", DEMO_INPUT_DIR)
     monkeypatch.setattr(outline_generator, "STATE_DIR", state_dir)
     monkeypatch.setattr(outline_generator, "OUTLINE_PATH", state_dir / "outline.json")
-    monkeypatch.setattr(
-        outline_generator, "OUTLINE_RAW_PATH", state_dir / "outline_raw_response.txt"
-    )
+    monkeypatch.setattr(outline_generator, "OUTLINE_RAW_PATH", state_dir / "outline_raw_response.txt")
 
     monkeypatch.setattr(retrieval, "STATE_DIR", state_dir)
     monkeypatch.setattr(retrieval, "CHUNKS_PATH", state_dir / "chunks.json")
@@ -161,12 +158,8 @@ def offline_env(monkeypatch, tmp_path) -> dict[str, Path]:
     monkeypatch.setattr(qc_reviewer, "QC_REPORT_PATH", state_dir / "qc_report.json")
 
     monkeypatch.setattr(document_assembler, "OUTPUT_DIR", output_dir)
-    monkeypatch.setattr(
-        document_assembler, "FINAL_REPORT_PATH", output_dir / "Final_Report.docx"
-    )
-    monkeypatch.setattr(
-        document_assembler, "QC_REPORT_PATH", output_dir / "QC_Report.md"
-    )
+    monkeypatch.setattr(document_assembler, "FINAL_REPORT_PATH", output_dir / "Final_Report.docx")
+    monkeypatch.setattr(document_assembler, "QC_REPORT_PATH", output_dir / "QC_Report.md")
 
     monkeypatch.setattr(section_generator.time, "sleep", lambda *_: None)
 

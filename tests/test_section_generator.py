@@ -49,9 +49,7 @@ class RaisingClient:
 
 def test_is_key_point_covered_requires_three_tokens():
     assert _is_key_point_covered("market growth projections", "market growth") is False
-    assert _is_key_point_covered(
-        "market growth projections", "market growth projections confirmed"
-    )
+    assert _is_key_point_covered("market growth projections", "market growth projections confirmed")
 
 
 def test_is_key_point_covered_without_significant_tokens_is_true():
@@ -99,9 +97,7 @@ def test_generate_all_sections_contains_client_exception(tmp_path, monkeypatch):
     monkeypatch.setattr(section_generator.time, "sleep", lambda *_: None)
     client = RaisingClient()
 
-    sections = SectionGenerator(client).generate_all_sections(
-        OUTLINE, [{"text": "context"}], "methodology"
-    )
+    sections = SectionGenerator(client).generate_all_sections(OUTLINE, [{"text": "context"}], "methodology")
 
     assert sections == {"Executive Summary": "", "Market Overview": ""}
     assert client.calls == 2

@@ -44,9 +44,7 @@ class RevisionLoop:
         """
         generator = SectionGenerator(self.client)
         outline_sections = {
-            section.get("title"): section
-            for section in outline.get("outline", [])
-            if isinstance(section, dict)
+            section.get("title"): section for section in outline.get("outline", []) if isinstance(section, dict)
         }
         fixed: set[str] = set()
 
@@ -62,9 +60,7 @@ class RevisionLoop:
                 continue
 
             logger.info("Revising section '%s' due to HIGH issue: %s", title, issue.get("description"))
-            if self._revise_section(
-                generator, sections, outline_sections[title], issue, max_attempts
-            ):
+            if self._revise_section(generator, sections, outline_sections[title], issue, max_attempts):
                 fixed.add(title)
 
         logger.info("Revision complete. Fixed %d section(s).", len(fixed))
@@ -86,9 +82,7 @@ class RevisionLoop:
         title = issue.get("section")
 
         for attempt in range(1, max_attempts + 1):
-            messages = generator._build_messages(
-                section_meta, self.all_chunks, self.methodology_text
-            )
+            messages = generator._build_messages(section_meta, self.all_chunks, self.methodology_text)
             messages.append(format_user_message(feedback))
             try:
                 new_text = self.client.chat_completion(
@@ -99,7 +93,10 @@ class RevisionLoop:
             except Exception as exc:  # noqa: BLE001 — a failed attempt must not abort remaining sections
                 logger.error(
                     "Revision attempt %d/%d for '%s' failed: %s",
-                    attempt, max_attempts, title, exc,
+                    attempt,
+                    max_attempts,
+                    title,
+                    exc,
                 )
                 continue
 
@@ -110,6 +107,8 @@ class RevisionLoop:
                 return True
             logger.warning(
                 "Revision attempt %d/%d for '%s' returned empty text",
-                attempt, max_attempts, title,
+                attempt,
+                max_attempts,
+                title,
             )
         return False
