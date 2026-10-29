@@ -90,7 +90,10 @@ class DeepSeekClient:
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}",
         }
+        return self._send_with_retries(payload, headers)
 
+    def _send_with_retries(self, payload: dict, headers: dict) -> str:
+        """POST one chat completion request, retrying transient failures."""
         last_error: Exception | None = None
         for attempt in range(1, MAX_RETRIES + 1):
             started_at = time.monotonic()
@@ -112,7 +115,8 @@ class DeepSeekClient:
                 response.raise_for_status()
                 data = response.json()
                 content = data["choices"][0]["message"]["content"]
-                logger.info("chat_completion ok in %.2fs (%d tokens)", elapsed, data.get("usage", {}).get("completion_tokens", 0))
+                tokens = data.get("usage", {}).get("completion_tokens", 0)
+                logger.info("chat_completion ok in %.2fs (%d tokens)", elapsed, tokens)
                 return content
             except (requests.RequestException, KeyError, json.JSONDecodeError) as exc:
                 last_error = exc

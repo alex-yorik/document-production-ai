@@ -110,7 +110,7 @@ def _stage_sections(
 
     all_chunks = load_json(CHUNKS_PATH)
 
-    with open(INPUT_DIR / "methodology.md", "r", encoding="utf-8") as f:
+    with open(INPUT_DIR / "methodology.md", encoding="utf-8") as f:
         methodology_text = f.read()
 
     generator = SectionGenerator(client)
@@ -215,8 +215,6 @@ def run_full_pipeline() -> dict:
     setup_logging()
     load_env()
     validate_input_dir(INPUT_DIR)
-
-    log = logging.getLogger("run_pipeline")
 
     _stage_ingest()
 

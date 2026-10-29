@@ -156,7 +156,7 @@ Use markdown formatting (headers, lists, bold for key numbers).
             logger.info("Generating section %s: %s", number, title)
             try:
                 text = self.generate_section(section, all_chunks, methodology_text)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 — one failed section must not abort the report
                 logger.error("Failed to generate section '%s': %s", title, exc)
                 sections[title] = ""
                 self._save_draft(sections)

@@ -96,7 +96,7 @@ class RevisionLoop:
                     temperature=SECTION_TEMPERATURE,
                     max_tokens=SECTION_MAX_TOKENS,
                 )
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 — a failed attempt must not abort remaining sections
                 logger.error(
                     "Revision attempt %d/%d for '%s' failed: %s",
                     attempt, max_attempts, title, exc,

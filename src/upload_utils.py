@@ -76,7 +76,7 @@ def clean_input_dir(input_dir: str | Path = INPUT_DIR) -> None:
     project_root = PROJECT_ROOT.resolve()
     demo_dir = (project_root / "demo").resolve()
 
-    if target == project_root or target == demo_dir or demo_dir in target.parents:
+    if target in (project_root, demo_dir) or demo_dir in target.parents:
         raise ValueError(
             f"Refusing to clean INPUT_DIR '{target}': it is the project root "
             "or inside demo/."

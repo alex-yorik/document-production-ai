@@ -215,16 +215,9 @@ class DocumentAssembler:
                 content += f"   - Suggestion: {issue.get('suggestion', 'N/A')}\n\n"
         return content
 
-    def generate_quality_report(self, qc_report_draft: dict, qc_report_final: dict) -> str:
-        """Write a QC report with before/after metrics to output/QC_Report.md.
-
-        Args:
-            qc_report_draft: QC review of the sections before AI revision.
-            qc_report_final: QC review of the sections after AI revision.
-
-        Returns:
-            Path to the saved QC report file.
-        """
+    @staticmethod
+    def _normalize_qc_reports(qc_report_draft: dict, qc_report_final: dict) -> tuple[dict, dict]:
+        """Validate report shapes and default missing issue lists to empty."""
         if not isinstance(qc_report_draft, dict):
             logger.warning("Draft QC report is not a dict; using empty draft")
             qc_report_draft = {}
@@ -235,7 +228,11 @@ class DocumentAssembler:
             qc_report_draft["issues"] = []
         if not isinstance(qc_report_final.get("issues"), list):
             qc_report_final["issues"] = []
+        return qc_report_draft, qc_report_final
 
+    @staticmethod
+    def _quality_metrics(qc_report_draft: dict, qc_report_final: dict) -> dict:
+        """Compute before/after quality metrics for the QC report."""
         draft_score = qc_report_draft.get("overall_score", 0)
         final_score = qc_report_final.get("overall_score", 0)
         draft_issues = len(qc_report_draft["issues"])
@@ -248,29 +245,59 @@ class DocumentAssembler:
         )
         score_delta = final_score - draft_score
         score_delta_text = f"+{score_delta}" if score_delta >= 0 else str(score_delta)
+        resolution_pct = int(resolved / draft_issues * 100) if draft_issues > 0 else 0
+        return {
+            "draft_score": draft_score,
+            "final_score": final_score,
+            "draft_issues": draft_issues,
+            "final_issues": final_issues,
+            "resolved": resolved,
+            "resolved_sections": resolved_sections,
+            "score_delta_text": score_delta_text,
+            "resolution_pct": resolution_pct,
+        }
 
+    @staticmethod
+    def _revision_actions(issues: list, resolved: int, draft_issues: int) -> str:
+        """Render the revision-actions block of the QC report."""
+        remaining_high = sum(
+            1 for i in issues
+            if isinstance(i, dict) and i.get("severity") == "HIGH"
+        )
+        if remaining_high == 0:
+            content = "- All HIGH-severity issues from draft were addressed by AI Revision Loop\n"
+        else:
+            content = (
+                f"- {remaining_high} HIGH-severity issue(s) remain after AI revision — "
+                "flagged below for human review\n"
+            )
+        return content + f"- {resolved} out of {draft_issues} issues resolved automatically\n"
+
+    def _build_quality_report_content(self, qc_report_draft: dict, qc_report_final: dict) -> str:
+        """Render the QC report markdown from validated draft and final reviews."""
+        m = self._quality_metrics(qc_report_draft, qc_report_final)
         content = f"""# Quality Control Report
 
 ## Summary
 
 ### Draft Quality (before AI revision)
-- Score: {draft_score}/100
-- Total Issues: {draft_issues}
+- Score: {m['draft_score']}/100
+- Total Issues: {m['draft_issues']}
   - HIGH: {self._count_by_severity(qc_report_draft["issues"], "HIGH")}
   - MEDIUM: {self._count_by_severity(qc_report_draft["issues"], "MEDIUM")}
   - LOW: {self._count_by_severity(qc_report_draft["issues"], "LOW")}
 
 ### Final Quality (after AI revision)
-- Score: {final_score}/100
-- Total Issues: {final_issues}
+- Score: {m['final_score']}/100
+- Total Issues: {m['final_issues']}
   - HIGH: {self._count_by_severity(qc_report_final["issues"], "HIGH")}
   - MEDIUM: {self._count_by_severity(qc_report_final["issues"], "MEDIUM")}
   - LOW: {self._count_by_severity(qc_report_final["issues"], "LOW")}
 
 ### Improvement Metrics
-- Score Improvement: {draft_score} → {final_score} (**{score_delta_text}**)
-- Issues Resolved: {resolved}/{draft_issues} (**{int(resolved / draft_issues * 100) if draft_issues > 0 else 0}%**)
-- Sections Improved: {resolved_sections}
+- Score Improvement: {m['draft_score']} → {m['final_score']} (**{m['score_delta_text']}**)
+- Issues Resolved: {m['resolved']}/{m['draft_issues']} (**{m['resolution_pct']}%**)
+- Sections Improved: {m['resolved_sections']}
 
 ---
 
@@ -278,39 +305,28 @@ class DocumentAssembler:
 
 """
         content += self._render_issues_markdown(qc_report_draft["issues"], show_none=False)
-
         content += "\n---\n\n## Final Issues (remaining after revision)\n\n"
-
-        for severity in ["HIGH", "MEDIUM", "LOW"]:
-            issues = [
-                i for i in qc_report_final["issues"]
-                if isinstance(i, dict) and i.get("severity") == severity
-            ]
-            if issues:
-                content += f"### {severity} Severity ({len(issues)} issues)\n\n"
-                for idx, issue in enumerate(issues, 1):
-                    content += f"{idx}. **{issue.get('section', 'N/A')}**: {issue.get('description', 'N/A')}\n"
-                    content += f"   - Location: {issue.get('location', 'N/A')}\n"
-                    content += f"   - Suggestion: {issue.get('suggestion', 'N/A')}\n\n"
-            else:
-                content += f"### {severity} Severity: None\n\n"
-
+        content += self._render_issues_markdown(qc_report_final["issues"], show_none=True)
         content += "\n---\n\n## Revision Actions Taken\n\n"
-
-        remaining_high = sum(
-            1 for i in qc_report_final["issues"]
-            if isinstance(i, dict) and i.get("severity") == "HIGH"
+        content += self._revision_actions(
+            qc_report_final["issues"], m["resolved"], m["draft_issues"]
         )
+        return content
 
-        if remaining_high == 0:
-            content += "- All HIGH-severity issues from draft were addressed by AI Revision Loop\n"
-        else:
-            content += (
-                f"- {remaining_high} HIGH-severity issue(s) remain after AI revision — "
-                "flagged below for human review\n"
-            )
+    def generate_quality_report(self, qc_report_draft: dict, qc_report_final: dict) -> str:
+        """Write a QC report with before/after metrics to output/QC_Report.md.
 
-        content += f"- {resolved} out of {draft_issues} issues resolved automatically\n"
+        Args:
+            qc_report_draft: QC review of the sections before AI revision.
+            qc_report_final: QC review of the sections after AI revision.
+
+        Returns:
+            Path to the saved QC report file.
+        """
+        qc_report_draft, qc_report_final = self._normalize_qc_reports(
+            qc_report_draft, qc_report_final
+        )
+        content = self._build_quality_report_content(qc_report_draft, qc_report_final)
 
         QC_REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
         Path(QC_REPORT_PATH).write_text(content, encoding="utf-8")

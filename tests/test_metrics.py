@@ -40,7 +40,7 @@ class TestBuildMetrics:
             {"issues": [], "overall_score": 60},
         )
         assert set(result.keys()) == self.EXPECTED_KEYS
-        assert all(" " not in key for key in result.keys())
+        assert all(" " not in key for key in result)
 
     def test_resolution_rate_zero_when_no_draft_issues(self):
         result = _build_metrics(

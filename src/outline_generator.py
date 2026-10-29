@@ -35,7 +35,7 @@ Your task:
 
 Required sections (adapt titles as needed):
 1. Executive Summary
-2. Market Overview  
+2. Market Overview
 3. Competitive Landscape
 4. Key Risks
 5. Recommendations

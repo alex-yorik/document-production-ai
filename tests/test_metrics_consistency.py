@@ -1,8 +1,8 @@
 """Consistency tests: QC report and pipeline metrics must agree on resolved."""
 
+from run_pipeline import _build_metrics
 from src import document_assembler
 from src.document_assembler import DocumentAssembler
-from run_pipeline import _build_metrics
 
 
 def _write_report(tmp_path, monkeypatch, draft, final):

@@ -197,7 +197,7 @@ Be strict and thorough. Identify ALL issues, even minor ones.
             return self.client.chat_completion_json(
                 messages, temperature=QC_TEMPERATURE, max_tokens=QC_MAX_TOKENS
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — retry once on any client failure
             logger.warning(
                 "QC review attempt 1 failed (%s); retrying with larger token budget", exc
             )
@@ -212,7 +212,7 @@ Be strict and thorough. Identify ALL issues, even minor ones.
         messages = self._build_messages(sections, outline, methodology_text)
         try:
             review = self._request_review(messages)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — fall back to a zero-score report on any failure
             logger.error("QC review request failed: %s", exc)
             review = {
                 "issues": [],

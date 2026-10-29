@@ -1,6 +1,5 @@
 import os
 import traceback
-
 from pathlib import Path
 
 import streamlit as st
@@ -72,10 +71,7 @@ st.caption(
 
 
 # Results screen (shown again after the page re-runs)
-def show_results_page(output):
-    st.success("Document generated successfully!")
-
-    # Metrics
+def _show_metrics(output):
     col1, col2, col3 = st.columns(3)
 
     with col1:
@@ -108,22 +104,25 @@ def show_results_page(output):
     else:
         st.success("✅ All HIGH-severity issues resolved automatically")
 
-    # Expandable list of remaining issues
-    if output['remaining_issues']:
-        with st.expander(
-            f"View remaining issues ({len(output['remaining_issues'])})"
-        ):
-            for idx, issue in enumerate(output['remaining_issues'], 1):
-                st.markdown(f"**{idx}. {issue.get('section', 'N/A')}**")
-                st.text(
-                    f"Type: {issue.get('severity', 'N/A')} - "
-                    f"{issue.get('issue_type', 'N/A')}"
-                )
-                st.text(f"Description: {issue.get('description', 'N/A')}")
-                st.text(f"Suggestion: {issue.get('suggestion', 'N/A')}")
-                st.divider()
 
-    # Download buttons
+def _show_remaining_issues(output):
+    if not output['remaining_issues']:
+        return
+    with st.expander(
+        f"View remaining issues ({len(output['remaining_issues'])})"
+    ):
+        for idx, issue in enumerate(output['remaining_issues'], 1):
+            st.markdown(f"**{idx}. {issue.get('section', 'N/A')}**")
+            st.text(
+                f"Type: {issue.get('severity', 'N/A')} - "
+                f"{issue.get('issue_type', 'N/A')}"
+            )
+            st.text(f"Description: {issue.get('description', 'N/A')}")
+            st.text(f"Suggestion: {issue.get('suggestion', 'N/A')}")
+            st.divider()
+
+
+def _show_downloads():
     st.subheader("Download")
 
     col1, col2 = st.columns(2)
@@ -155,8 +154,15 @@ def show_results_page(output):
     # Show the QC Report link
     st.subheader("QC Report Preview")
     if qc_path.exists():
-        with open(qc_path, "r", encoding="utf-8") as f:
+        with open(qc_path, encoding="utf-8") as f:
             st.markdown(f.read()[:2000] + "...")
+
+
+def show_results_page(output):
+    st.success("Document generated successfully!")
+    _show_metrics(output)
+    _show_remaining_issues(output)
+    _show_downloads()
 
 
 # If generation has already finished, show the results (page state is preserved)
@@ -193,7 +199,7 @@ if st.button("🚀 Generate Report", type="primary", disabled=len(uploaded_files
             # Screen 3: Result
             show_results_page(output)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — surface any pipeline failure in the Streamlit UI
             st.error(f"Error: {str(e)}")
             st.code(traceback.format_exc())
 
