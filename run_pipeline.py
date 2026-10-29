@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 
 from src import ingestion, retrieval
+from src.llm_client import DeepSeekClient
 from src.metrics import count_resolved_issues
 from src.utils import INPUT_DIR, STATE_DIR, load_env, load_json
 
@@ -72,34 +73,21 @@ def _build_metrics(qc_report: dict, qc_report_final: dict) -> dict:
     }
 
 
-def run_full_pipeline() -> dict:
-    """Run the full pipeline and return metrics for the UI.
-
-    Returns:
-        dict with keys: draft_score, final_score, draft_issues, final_issues,
-        resolved_issues, remaining_high, remaining_issues, resolution_rate.
-    """
-    setup_logging()
-    load_env()
-    validate_input_dir(INPUT_DIR)
-
-    log = logging.getLogger("run_pipeline")
-
-    # --- Stage 1: Ingestion -------------------------------------------------
+def _stage_ingest() -> None:
+    """Stage 1-2: ingest input documents and load the retrieval layer."""
     chunks = ingestion.process_documents()
     files_in = len({chunk["source_file"] for chunk in chunks})
     print(f"Stage 1: Ingestion completed. Created {len(chunks)} chunks from {files_in} files.")
 
-    # --- Stage 2: Retrieval layer -------------------------------------------
     chunks = retrieval.load_chunks()
     print(f"Stage 2: Retrieval ready. {len(chunks)} chunks loaded.")
 
-    # --- Stage 3: Outline Generation -----------------------------------------
+
+def _stage_outline(client: DeepSeekClient) -> dict:
+    """Stage 3: generate the report outline."""
     logging.info("Stage 3: Outline Generation")
-    from src.llm_client import DeepSeekClient
     from src.outline_generator import OutlineGenerator, load_input_files
 
-    client = DeepSeekClient()
     brief, methodology, market_data = load_input_files()
     generator = OutlineGenerator(client)
     outline = generator.generate_outline(brief, methodology, market_data)
@@ -110,25 +98,32 @@ def run_full_pipeline() -> dict:
     # Pretty print the outline to the console
     for section in outline['outline']:
         logging.info(f"  {section['section_number']}. {section['title']}")
+    return outline
 
-    # --- Stage 4: Section Generation -----------------------------------------
+
+def _stage_sections(
+    client: DeepSeekClient, outline: dict
+) -> tuple[dict, list, str]:
+    """Stage 4: generate all report sections."""
     logging.info("Stage 4: Section Generation")
     from src.section_generator import SectionGenerator
 
-    # Load chunks
     all_chunks = load_json(CHUNKS_PATH)
 
-    # Load methodology
     with open(INPUT_DIR / "methodology.md", "r", encoding="utf-8") as f:
         methodology_text = f.read()
 
-    # Generate all sections
     generator = SectionGenerator(client)
     sections = generator.generate_all_sections(outline, all_chunks, methodology_text)
 
     logging.info(f"Generated {len(sections)} sections")
+    return sections, all_chunks, methodology_text
 
-    # --- Stage 5: AI Quality Review -----------------------------------------
+
+def _stage_review(
+    client: DeepSeekClient, sections: dict, outline: dict, methodology_text: str
+) -> tuple[object, dict]:
+    """Stage 5: run the AI quality review."""
     logging.info("Stage 5: AI Quality Review")
     from src.qc_reviewer import QCReviewer
 
@@ -140,8 +135,19 @@ def run_full_pipeline() -> dict:
     logging.info(f"  MEDIUM: {sum(1 for i in qc_report['issues'] if i['severity'] == 'MEDIUM')}")
     logging.info(f"  LOW: {sum(1 for i in qc_report['issues'] if i['severity'] == 'LOW')}")
     logging.info(f"Overall Score: {qc_report['overall_score']}/100")
+    return qc_reviewer, qc_report
 
-    # --- Stage 6: Revision Loop (if HIGH issues found) ----------------------
+
+def _stage_revision(
+    client: DeepSeekClient,
+    sections: dict,
+    outline: dict,
+    methodology_text: str,
+    all_chunks: list,
+    qc_reviewer,
+    qc_report: dict,
+) -> tuple[dict, dict]:
+    """Stage 6-6.5: fix HIGH issues, then run the final QC pass."""
     high_issues = qc_reviewer.get_high_severity_issues(qc_report)
     if high_issues:
         logging.info(f"Stage 6: Revision Loop - fixing {len(high_issues)} HIGH issues")
@@ -153,7 +159,6 @@ def run_full_pipeline() -> dict:
     else:
         logging.info("Stage 6: No HIGH issues found. Skipping revision.")
 
-    # --- Stage 6.5: Final QC Review (post-revision) -------------------------
     logging.info("Stage 6.5: Final QC Review (post-revision)")
     qc_report_final = qc_reviewer.review_sections(sections, outline, methodology_text)
 
@@ -163,11 +168,9 @@ def run_full_pipeline() -> dict:
     logging.info(f"  MEDIUM: {sum(1 for i in qc_report_final['issues'] if i['severity'] == 'MEDIUM')}")
     logging.info(f"  LOW: {sum(1 for i in qc_report_final['issues'] if i['severity'] == 'LOW')}")
 
-    # Compute improvement metrics
     initial_score = qc_report['overall_score']
     final_score = qc_report_final['overall_score']
     initial_issues = len(qc_report['issues'])
-    final_issues = len(qc_report_final['issues'])
     resolved_issues = count_resolved_issues(qc_report['issues'], qc_report_final['issues'])
 
     logging.info(f"Quality Improvement: {initial_score} → {final_score} (+{final_score - initial_score})")
@@ -181,8 +184,13 @@ def run_full_pipeline() -> dict:
             logging.warning(
                 f"{len(remaining_high)} HIGH issues remain after revision — marked as known limitations"
             )
+    return sections, qc_report_final
 
-    # --- Stage 7: Document Assembly ------------------------------------------
+
+def _stage_assemble(
+    sections: dict, outline: dict, qc_report: dict, qc_report_final: dict
+) -> dict:
+    """Stage 7: assemble the DOCX report and QC markdown, then build metrics."""
     logging.info("Stage 7: Document Assembly")
     from src.document_assembler import DocumentAssembler
 
@@ -195,6 +203,31 @@ def run_full_pipeline() -> dict:
     logging.info("Pipeline completed successfully!")
 
     return _build_metrics(qc_report, qc_report_final)
+
+
+def run_full_pipeline() -> dict:
+    """Run the full pipeline and return metrics for the UI.
+
+    Returns:
+        dict with keys: draft_score, final_score, draft_issues, final_issues,
+        resolved_issues, remaining_high, remaining_issues, resolution_rate.
+    """
+    setup_logging()
+    load_env()
+    validate_input_dir(INPUT_DIR)
+
+    log = logging.getLogger("run_pipeline")
+
+    _stage_ingest()
+
+    client = DeepSeekClient()
+    outline = _stage_outline(client)
+    sections, all_chunks, methodology_text = _stage_sections(client, outline)
+    qc_reviewer, qc_report = _stage_review(client, sections, outline, methodology_text)
+    sections, qc_report_final = _stage_revision(
+        client, sections, outline, methodology_text, all_chunks, qc_reviewer, qc_report
+    )
+    return _stage_assemble(sections, outline, qc_report, qc_report_final)
 
 
 def main() -> int:
