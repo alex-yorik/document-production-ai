@@ -20,11 +20,13 @@ QC_REPORT_PATH = OUTPUT_DIR / "QC_Report.md"
 
 SUBTITLE = "Prepared by AI Document Production System"
 
-BOLD_PATTERN = re.compile(r"\*\*(.+?)\*\*")
+INLINE_PATTERN = re.compile(
+    r"(\*\*[^*\n]+?\*\*|\*[^*\n]+?\*|(?<!\w)_[^_\n]+?_(?!\w))"
+)
 HEADING_PATTERN = re.compile(r"^(#{1,6})\s+(.*)")
 BULLET_PATTERN = re.compile(r"^\s*[-*]\s+(.*)")
 NUMBERED_PATTERN = re.compile(r"^\s*\d+[.)]\s+(.*)")
-TABLE_SEPARATOR_PATTERN = re.compile(r"^:?-{3,}:?$")
+TABLE_SEPARATOR_PATTERN = re.compile(r"^:?\s*-{3,}\s*:?$")
 
 CHARS_PER_PAGE = 2500
 
@@ -94,33 +96,65 @@ class DocumentAssembler:
         doc.add_page_break()
 
     def _render_markdown(self, doc: Document, text: str) -> None:
-        for raw_line in text.splitlines():
-            stripped = raw_line.strip()
+        lines = text.splitlines()
+        index = 0
+        while index < len(lines):
+            stripped = lines[index].strip()
             if not stripped or stripped in ("---", "***", "___"):
+                index += 1
                 continue
             if stripped.startswith("|"):
-                self._render_table_row(doc, stripped)
+                block = []
+                while index < len(lines) and lines[index].strip().startswith("|"):
+                    block.append(lines[index].strip())
+                    index += 1
+                self._render_table_block(doc, block)
                 continue
             heading = HEADING_PATTERN.match(stripped)
             if heading:
                 level = min(len(heading.group(1)), 4)
                 self._add_heading(doc, heading.group(2).strip(), level)
+                index += 1
                 continue
             bullet = BULLET_PATTERN.match(stripped)
             if bullet:
                 self._add_paragraph_with_bold(doc, bullet.group(1).strip(), style="List Bullet")
+                index += 1
                 continue
             numbered = NUMBERED_PATTERN.match(stripped)
             if numbered:
                 self._add_paragraph_with_bold(doc, numbered.group(1).strip(), style="List Number")
+                index += 1
                 continue
             self._add_paragraph_with_bold(doc, stripped)
+            index += 1
 
-    def _render_table_row(self, doc: Document, line: str) -> None:
-        cells = [cell.strip() for cell in line.strip("|").split("|")]
-        if cells and all(TABLE_SEPARATOR_PATTERN.match(cell) for cell in cells):
+    @staticmethod
+    def _split_table_row(line: str) -> list[str]:
+        return [cell.strip() for cell in line.strip("|").split("|")]
+
+    @staticmethod
+    def _is_separator_row(cells: list[str]) -> bool:
+        return bool(cells) and all(TABLE_SEPARATOR_PATTERN.match(cell) for cell in cells)
+
+    def _render_table_block(self, doc: Document, block: list[str]) -> None:
+        rows = [
+            cells for cells in (self._split_table_row(line) for line in block)
+            if not self._is_separator_row(cells)
+        ]
+        if len(rows) < 2:
+            if rows:
+                self._add_paragraph_with_bold(doc, " | ".join(rows[0]))
             return
-        self._add_paragraph_with_bold(doc, " | ".join(cells))
+
+        column_count = max(len(row) for row in rows)
+        table = doc.add_table(rows=len(rows), cols=column_count)
+        table.style = "Table Grid"
+        for row_index, row in enumerate(rows):
+            for column_index in range(column_count):
+                value = row[column_index] if column_index < len(row) else ""
+                paragraph = table.cell(row_index, column_index).paragraphs[0]
+                self._add_inline_runs(paragraph, value)
 
     def _add_heading(self, doc: Document, title: str, level: int) -> None:
         heading = doc.add_heading("", level=level)
@@ -132,12 +166,24 @@ class DocumentAssembler:
         self, doc: Document, text: str, style: str | None = None
     ) -> None:
         paragraph = doc.add_paragraph(style=style) if style else doc.add_paragraph()
+        self._add_inline_runs(paragraph, text)
+
+    @staticmethod
+    def _add_inline_runs(paragraph, text: str) -> None:
         position = 0
-        for match in BOLD_PATTERN.finditer(text):
+        for match in INLINE_PATTERN.finditer(text):
             if match.start() > position:
                 paragraph.add_run(text[position:match.start()])
-            bold_run = paragraph.add_run(match.group(1))
-            bold_run.bold = True
+            token = match.group(0)
+            if token.startswith("**"):
+                run = paragraph.add_run(token[2:-2])
+                run.bold = True
+            elif token.startswith("*"):
+                run = paragraph.add_run(token[1:-1])
+                run.italic = True
+            else:
+                run = paragraph.add_run(token[1:-1])
+                run.italic = True
             position = match.end()
         if position < len(text):
             paragraph.add_run(text[position:])
