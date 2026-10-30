@@ -1,6 +1,6 @@
 # AI Document Production & Quality Control
 
-[![CI](https://github.com/alex-yorik/document-production-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/alex-yorik/document-production-ai/actions/workflows/ci.yml)
+[![CI](https://github.com/alex-yorik/document-production-ai/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/alex-yorik/document-production-ai/actions/workflows/ci.yml?query=branch%3Amain)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)
 ![License](https://img.shields.io/badge/license-All%20rights%20reserved-red)
 
@@ -233,6 +233,9 @@ pytest -m "not live" --cov --cov-fail-under=80
 The suite needs no API keys and no network. The CI workflow runs lint, format
 check, tests with the coverage gate, bandit, gitleaks and the modularity check
 on every push and pull request.
+
+Required checks on this branch: validate, modularity, security (verified in the
+Actions tab on 2026-10-30).
 
 ## Limitations
 

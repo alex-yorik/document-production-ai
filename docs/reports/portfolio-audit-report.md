@@ -195,14 +195,22 @@ VERIFIED:
 
 - все локальные проверки из раздела 4;
 - чистый клон: pytest зелёный, запуск без ключа даёт понятную ошибку;
-- push ветки в origin.
+- push ветки в origin;
+- PR #1 открыт, все проверки зелёные (источник: скриншот владельца PR #1,
+  дата 2026-10-30);
+- GitHub Actions отработали на PR #1: workflow CI (job `validate`) и workflow
+  Quality Gates (jobs `modularity`, `security`) — Successful на `pull_request`
+  и `push` (источник: скриншот владельца PR #1, дата 2026-10-30);
+- имена job подтверждены живым прогоном: `validate`, `modularity`, `security`;
+- бейдж CI в README ссылается на workflow `CI` (файл `.github/workflows/ci.yml`,
+  ветка `main`) и подтверждён в Actions.
 
 NOT VERIFIED:
 
-- GitHub Actions ещё не запускались (PR в этой фазе не открывается);
-- бейдж CI в README не проверен в Actions;
-- имена job (`validate`, `security`, `modularity`) не подтверждены живым
-  прогоном. Владелец проверяет после открытия PR (O-04 / O-03).
+- открытых пунктов нет.
+
+Точные имена job для задачи владельца O-03 (значения поля `name:` / `job:`):
+`validate`, `modularity`, `security`.
 
 ## 7. Baseline vs итог
 
@@ -216,4 +224,4 @@ NOT VERIFIED:
 | ruff | не настроен в baseline-прогоне | `All checks passed!` |
 | Формат | не проверялся | 50 files already formatted |
 | Модульность | не проверялась | OK (файлы ≤ 500, функции ≤ 50) |
-| Actions | не запускались | NOT VERIFIED |
+| Actions | не запускались | VERIFIED: PR #1 зелёный (`validate`, `modularity`, `security`) |
