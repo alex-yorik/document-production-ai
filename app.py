@@ -10,6 +10,16 @@ from src.utils import OUTPUT_DIR
 # Initialize session state
 if "generation_complete" not in st.session_state:
     st.session_state.generation_complete = False
+if "error" not in st.session_state:
+    st.session_state.error = None
+
+
+def _reset_generation_state():
+    """Return the UI to the upload form and clear any previous run."""
+    st.session_state["generation_complete"] = False
+    st.session_state["error"] = None
+    st.session_state.pop("output", None)
+
 
 # Page configuration
 st.set_page_config(page_title="Document Production AI", page_icon="📄", layout="wide")
@@ -22,6 +32,9 @@ st.warning(
     "Demo. Do not upload real personal or confidential data. Uploaded text is "
     "sent to an external LLM service (DeepSeek)."
 )
+
+if st.session_state.get("error"):
+    st.error(st.session_state["error"])
 
 # Sidebar with information
 with st.sidebar:
@@ -139,13 +152,28 @@ def show_results_page(output):
 
 # If generation has already finished, show the results (page state is preserved)
 if st.session_state.get("generation_complete", False):
-    show_results_page(st.session_state["output"])
+    output = st.session_state.get("output")
+    if isinstance(output, dict):
+        try:
+            show_results_page(output)
+        except Exception as e:  # noqa: BLE001 — never leave the UI in a broken state
+            _reset_generation_state()
+            st.session_state["error"] = f"Could not display results: {e}"
+            st.error(st.session_state["error"])
+    else:
+        _reset_generation_state()
+        st.error("Previous results are unavailable. Please generate the report again.")
+
+# Let the user clear results and start over without reloading the page
+if st.button("🔄 Reset / New Report", key="reset_button"):
+    _reset_generation_state()
+    st.rerun()
 
 
 # Generate button
-if st.button("🚀 Generate Report", type="primary", disabled=len(uploaded_files) == 0):
+if st.button("🚀 Generate Report", type="primary", key="generate_button", disabled=len(uploaded_files) == 0):
     # Reset the flag before a new generation
-    st.session_state["generation_complete"] = False
+    _reset_generation_state()
 
     upload_error = validate_uploads(uploaded_files)
     if upload_error:
@@ -165,16 +193,21 @@ if st.button("🚀 Generate Report", type="primary", disabled=len(uploaded_files
 
             output = run_full_pipeline()
 
+        except Exception as e:  # noqa: BLE001 — surface any pipeline failure in the Streamlit UI
+            st.session_state["generation_complete"] = False
+            st.session_state["error"] = f"Pipeline failed: {e}"
+            st.session_state.pop("output", None)
+            st.error(st.session_state["error"])
+            st.code(traceback.format_exc())
+
+        else:
             # Store the result in session_state
             st.session_state["generation_complete"] = True
+            st.session_state["error"] = None
             st.session_state["output"] = output
 
             # Screen 3: Result
             show_results_page(output)
-
-        except Exception as e:  # noqa: BLE001 — surface any pipeline failure in the Streamlit UI
-            st.error(f"Error: {str(e)}")
-            st.code(traceback.format_exc())
 
 # Footer
 st.markdown("---")
