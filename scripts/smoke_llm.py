@@ -1,4 +1,8 @@
-"""Manual test/demo for the DeepSeek client and keyword retrieval."""
+"""Manual live check of the DeepSeek client and keyword retrieval.
+
+This is a manual live check, needs DEEPSEEK_API_KEY, not part of the test suite.
+Run from the repository root: python3 scripts/smoke_llm.py
+"""
 
 import logging
 import sys

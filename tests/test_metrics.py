@@ -40,7 +40,7 @@ class TestBuildMetrics:
             {"issues": [], "overall_score": 60},
         )
         assert set(result.keys()) == self.EXPECTED_KEYS
-        assert all(" " not in key for key in result.keys())
+        assert all(" " not in key for key in result)
 
     def test_resolution_rate_zero_when_no_draft_issues(self):
         result = _build_metrics(
@@ -69,3 +69,28 @@ class TestBuildMetrics:
         )
         assert result["draft_score"] == 62
         assert result["final_score"] == 72
+
+
+class TestResolvedMatchingAndBounds:
+    def test_same_section_same_prefix_different_description_not_merged(self):
+        long_prefix = "x" * 50
+        draft = [
+            {"section": "1", "description": long_prefix + " first problem", "severity": "HIGH"},
+            {"section": "1", "description": long_prefix + " second problem", "severity": "HIGH"},
+        ]
+        final = [
+            {"section": "1", "description": long_prefix + " first problem", "severity": "HIGH"},
+        ]
+        assert count_resolved_issues(draft, final) == 1
+
+    def test_resolved_is_never_negative(self):
+        final = [
+            {"section": "1", "description": "new one", "severity": "HIGH"},
+            {"section": "2", "description": "new two", "severity": "LOW"},
+        ]
+        assert count_resolved_issues([], final) == 0
+
+    def test_issue_without_severity_does_not_raise(self):
+        draft = [{"section": "1", "description": "no severity in draft"}]
+        final = [{"section": "2", "description": "no severity in final"}]
+        assert count_resolved_issues(draft, final) == 1

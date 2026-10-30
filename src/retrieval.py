@@ -4,11 +4,11 @@ import logging
 import re
 from typing import Any
 
-from src.utils import load_json
+from src.utils import STATE_DIR, load_json
 
 logger = logging.getLogger(__name__)
 
-CHUNKS_PATH = "project_state/chunks.json"
+CHUNKS_PATH = STATE_DIR / "chunks.json"
 
 
 def load_chunks() -> list[dict[str, Any]]:

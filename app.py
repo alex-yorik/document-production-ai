@@ -1,27 +1,29 @@
 import os
 import traceback
-
-import streamlit as st
 from pathlib import Path
 
-from src.utils import INPUT_DIR, OUTPUT_DIR
+import streamlit as st
 
-# Инициализация состояния сессии
-if 'generation_complete' not in st.session_state:
+from src.upload_utils import format_delta, save_uploaded_files, validate_uploads
+from src.utils import OUTPUT_DIR
+
+# Initialize session state
+if "generation_complete" not in st.session_state:
     st.session_state.generation_complete = False
 
-# Конфигурация страницы
-st.set_page_config(
-    page_title="Document Production AI",
-    page_icon="📄",
-    layout="wide"
-)
+# Page configuration
+st.set_page_config(page_title="Document Production AI", page_icon="📄", layout="wide")
 
-# Заголовок
+# Title
 st.title("📄 Document Production AI")
 st.markdown("Automated document generation with AI Quality Control")
 
-# Боковая панель с информацией
+st.warning(
+    "Demo. Do not upload real personal or confidential data. Uploaded text is "
+    "sent to an external LLM service (DeepSeek)."
+)
+
+# Sidebar with information
 with st.sidebar:
     st.header("How it works")
     st.markdown("""
@@ -35,139 +37,64 @@ with st.sidebar:
 
     st.info("Processing time: 2-4 minutes")
 
-# Экран 1: Загрузка файлов
+# Screen 1: File upload
 st.subheader("Upload Source Documents")
-st.markdown("Upload 2-5 files (company brief, market data, methodology)")
-
-uploaded_files = st.file_uploader(
-    "Choose files",
-    type=["md", "txt"],
-    accept_multiple_files=True,
-    key="file_uploader"
+st.markdown(
+    "Upload 2-5 files. `methodology.md` is required; `company_brief.md` and "
+    "`market_data.md` are used by the demo (optional extras are used for "
+    "retrieval only)."
 )
+
+uploaded_files = st.file_uploader("Choose files", type=["md", "txt"], accept_multiple_files=True, key="file_uploader")
 
 st.warning("Generating a report replaces all files currently stored in input/.")
 
-project_name = st.text_input(
-    "Project name (optional)",
-    os.getenv("REPORT_TITLE", ""),
-    key="project_name"
-)
+project_name = st.text_input("Project name (optional)", os.getenv("REPORT_TITLE", ""), key="project_name")
 
-st.caption("The pipeline requires a file named `methodology.md` among the uploaded files.")
+st.caption("Required file name: `methodology.md`.")
 
 
-# Функция для очистки входной папки
-def clean_input_dir():
-    input_dir = Path(INPUT_DIR)
-    if input_dir.exists():
-        for file in input_dir.iterdir():
-            if file.is_file():
-                file.unlink()
-
-
-# Функция для сохранения загруженных файлов
-def save_uploaded_files(uploaded_files):
-    clean_input_dir()
-    input_dir = Path(INPUT_DIR)
-    input_dir.mkdir(parents=True, exist_ok=True)
-
-    for uploaded_file in uploaded_files:
-        file_path = input_dir / uploaded_file.name
-        with open(file_path, "wb") as f:
-            f.write(uploaded_file.getvalue())
-
-
-MIN_UPLOAD_FILES = 2
-MAX_UPLOAD_FILES = 5
-MAX_UPLOAD_BYTES = 10 * 1024 * 1024
-
-
-def validate_uploads(uploaded_files) -> str | None:
-    """Validate uploaded source files before running the pipeline.
-
-    Returns an error message, or None if the uploads are valid.
-    """
-    if not uploaded_files or not (
-        MIN_UPLOAD_FILES <= len(uploaded_files) <= MAX_UPLOAD_FILES
-    ):
-        return "Upload 2 to 5 files..."
-
-    total_bytes = sum(len(f.getvalue()) for f in uploaded_files)
-    if total_bytes > MAX_UPLOAD_BYTES:
-        total_mb = total_bytes / (1024 * 1024)
-        return (
-            f"Total upload size is {total_mb:.1f} MB — the limit is 10 MB. "
-            "Remove a file or reduce its size."
-        )
-
-    if not any(f.name == "methodology.md" for f in uploaded_files):
-        return (
-            "methodology.md is required among the uploaded files. "
-            "The pipeline expects a file named `methodology.md`."
-        )
-
-    return None
-
-
-def format_delta(value: int) -> str:
-    """Format a signed delta for the metrics display."""
-    return f"+{value}" if value > 0 else str(value)
-
-
-# Экран с результатами (показывается повторно после re-run страницы)
-def show_results_page(output):
-    st.success("Document generated successfully!")
-
-    # Метрики
+# Results screen (shown again after the page re-runs)
+def _show_metrics(output):
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.metric(
-            label="Draft Quality Score",
-            value=f"{output['draft_score']}/100",
-            delta=None
-        )
+        st.metric(label="Draft Quality Score", value=f"{output['draft_score']}/100", delta=None)
 
     with col2:
         st.metric(
             label="Final Quality Score",
             value=f"{output['final_score']}/100",
-            delta=format_delta(output['final_score'] - output['draft_score'])
+            delta=format_delta(output["final_score"] - output["draft_score"]),
         )
 
     with col3:
         st.metric(
             label="Issues Resolved",
             value=f"{output['resolved_issues']}/{output['draft_issues']}",
-            delta=f"{output['resolution_rate']}%"
+            delta=f"{output['resolution_rate']}%",
         )
 
-    # Предупреждение о оставшихся HIGH issues
-    if output['remaining_high'] > 0:
-        st.warning(
-            f"⚠️ {output['remaining_high']} HIGH-severity issues remain "
-            "— flagged for human review"
-        )
+    # Warn about remaining HIGH issues
+    if output["remaining_high"] > 0:
+        st.warning(f"⚠️ {output['remaining_high']} HIGH-severity issues remain — flagged for human review")
     else:
         st.success("✅ All HIGH-severity issues resolved automatically")
 
-    # Раскрывающийся список оставшихся issues
-    if output['remaining_issues']:
-        with st.expander(
-            f"View remaining issues ({len(output['remaining_issues'])})"
-        ):
-            for idx, issue in enumerate(output['remaining_issues'], 1):
-                st.markdown(f"**{idx}. {issue.get('section', 'N/A')}**")
-                st.text(
-                    f"Type: {issue.get('severity', 'N/A')} - "
-                    f"{issue.get('issue_type', 'N/A')}"
-                )
-                st.text(f"Description: {issue.get('description', 'N/A')}")
-                st.text(f"Suggestion: {issue.get('suggestion', 'N/A')}")
-                st.divider()
 
-    # Кнопки скачивания
+def _show_remaining_issues(output):
+    if not output["remaining_issues"]:
+        return
+    with st.expander(f"View remaining issues ({len(output['remaining_issues'])})"):
+        for idx, issue in enumerate(output["remaining_issues"], 1):
+            st.markdown(f"**{idx}. {issue.get('section', 'N/A')}**")
+            st.text(f"Type: {issue.get('severity', 'N/A')} - {issue.get('issue_type', 'N/A')}")
+            st.text(f"Description: {issue.get('description', 'N/A')}")
+            st.text(f"Suggestion: {issue.get('suggestion', 'N/A')}")
+            st.divider()
+
+
+def _show_downloads():
     st.subheader("Download")
 
     col1, col2 = st.columns(2)
@@ -181,7 +108,7 @@ def show_results_page(output):
                     data=f.read(),
                     file_name="Final_Report.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    use_container_width=True
+                    use_container_width=True,
                 )
 
     qc_path = Path(OUTPUT_DIR) / "QC_Report.md"
@@ -193,74 +120,59 @@ def show_results_page(output):
                     data=f.read(),
                     file_name="QC_Report.md",
                     mime="text/markdown",
-                    use_container_width=True
+                    use_container_width=True,
                 )
 
-    # Показываем ссылку на QC Report
+    # Show the QC Report link
     st.subheader("QC Report Preview")
     if qc_path.exists():
-        with open(qc_path, "r", encoding="utf-8") as f:
+        with open(qc_path, encoding="utf-8") as f:
             st.markdown(f.read()[:2000] + "...")
 
 
-# Если генерация уже завершена — показываем результаты (страница не сбрасывается)
-if st.session_state.get('generation_complete', False):
-    show_results_page(st.session_state['output'])
+def show_results_page(output):
+    st.success("Document generated successfully!")
+    _show_metrics(output)
+    _show_remaining_issues(output)
+    _show_downloads()
 
 
-# Кнопка Generate
+# If generation has already finished, show the results (page state is preserved)
+if st.session_state.get("generation_complete", False):
+    show_results_page(st.session_state["output"])
+
+
+# Generate button
 if st.button("🚀 Generate Report", type="primary", disabled=len(uploaded_files) == 0):
-    # Сбрасываем флаг перед новой генерацией
-    st.session_state['generation_complete'] = False
+    # Reset the flag before a new generation
+    st.session_state["generation_complete"] = False
 
     upload_error = validate_uploads(uploaded_files)
     if upload_error:
         st.error(upload_error)
         st.stop()
 
-    # Сохраняем файлы
+    # Save the files
     save_uploaded_files(uploaded_files)
 
     if project_name:
         os.environ["REPORT_TITLE"] = project_name
 
-    # Экран 2: Обработка (спиннер)
-    with st.spinner("Processing document... This will take 2-4 minutes"):
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-
-        # Запускаем pipeline
+    # Screen 2: Processing (spinner)
+    with st.spinner("Processing (usually a few minutes)..."):
         try:
-            status_text.text("Stage 1-2: Ingestion & Retrieval...")
-            progress_bar.progress(20)
-
-            status_text.text("Stage 3: Outline Generation...")
-            progress_bar.progress(40)
-
-            status_text.text("Stage 4: Section Generation...")
-            progress_bar.progress(60)
-
-            status_text.text("Stage 5-6: QC Review & Revision...")
-            progress_bar.progress(80)
-
-            status_text.text("Stage 7: Document Assembly...")
-            progress_bar.progress(90)
-
-            # Импортируем и запускаем pipeline
             from run_pipeline import run_full_pipeline
+
             output = run_full_pipeline()
 
-            progress_bar.progress(100)
-            status_text.text("✅ Complete!")
+            # Store the result in session_state
+            st.session_state["generation_complete"] = True
+            st.session_state["output"] = output
 
-            # Сохраняем результат в session_state
-            st.session_state['generation_complete'] = True
-            st.session_state['output'] = output
-
-            # Экран 3: Результат
+            # Screen 3: Result
             show_results_page(output)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — surface any pipeline failure in the Streamlit UI
             st.error(f"Error: {str(e)}")
             st.code(traceback.format_exc())
 

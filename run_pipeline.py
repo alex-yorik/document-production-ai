@@ -1,7 +1,7 @@
 """Document Production AI — pipeline entry point.
 
 Stages:
-    1. Ingestion: read input/ documents, chunk them, persist to project_state/.
+    1. Ingestion: read input/ documents, chunk them, persist to the state directory.
     2. Retrieval: load chunks and make the keyword search layer available.
     3. Outline generation: build the report structure via LLM.
     4. Section generation: write each section with LLM + retrieval.
@@ -16,7 +16,12 @@ import sys
 from pathlib import Path
 
 from src import ingestion, retrieval
-from src.utils import INPUT_DIR, load_env, load_json
+from src.llm_client import DeepSeekClient
+from src.metrics import count_resolved_issues
+from src.utils import INPUT_DIR, STATE_DIR, load_env, load_json
+
+REQUIRED_INPUT_FILES = ("company_brief.md", "methodology.md", "market_data.md")
+CHUNKS_PATH = STATE_DIR / "chunks.json"
 
 
 def setup_logging() -> None:
@@ -36,49 +41,13 @@ def validate_input_dir(input_dir: Path) -> None:
             f"INPUT_DIR '{input_dir}' does not exist. "
             f"Create it or run the demo: INPUT_DIR=demo/input python run_pipeline.py"
         )
-    if not (input_dir / "methodology.md").exists():
+    missing = [name for name in REQUIRED_INPUT_FILES if not (input_dir / name).is_file()]
+    if missing:
         raise ValueError(
-            f"'{input_dir}/methodology.md' is required. "
-            f"See demo/input/methodology.md for an example."
+            f"Missing required input file(s) in '{input_dir}': {', '.join(missing)}. "
+            f"Required files: {', '.join(REQUIRED_INPUT_FILES)}. "
+            f"See demo/input/ for examples."
         )
-    sources = [p for p in input_dir.iterdir()
-               if p.suffix in (".md", ".txt") and p.name != "methodology.md"]
-    if not sources:
-        raise ValueError(
-            f"No source documents in '{input_dir}'. "
-            f"Add at least one .md/.txt file besides methodology.md."
-        )
-
-
-def count_resolved_issues(draft_issues: list, final_issues: list) -> int:
-    """Считает issues как resolved, если:
-    - issue полностью исчез из final
-    - issue изменил severity на более низкий (HIGH→MEDIUM, MEDIUM→LOW)
-    """
-    severity_order = {'HIGH': 3, 'MEDIUM': 2, 'LOW': 1}
-
-    resolved = 0
-
-    # Сопоставляем issues по section + description
-    for draft in draft_issues:
-        draft_key = f"{draft.get('section')}_{draft.get('description', '')[:50]}"
-        draft_severity = severity_order.get(draft.get('severity'), 0)
-
-        # Ищем соответствующий issue в final
-        found = False
-        for final in final_issues:
-            final_key = f"{final.get('section')}_{final.get('description', '')[:50]}"
-            if draft_key == final_key:
-                final_severity = severity_order.get(final.get('severity'), 0)
-                if final_severity < draft_severity:
-                    resolved += 1  # severity понизился
-                found = True
-                break
-
-        if not found:
-            resolved += 1  # issue полностью исчез
-
-    return resolved
 
 
 def _build_metrics(qc_report: dict, qc_report_final: dict) -> dict:
@@ -96,12 +65,135 @@ def _build_metrics(qc_report: dict, qc_report_final: dict) -> dict:
         "final_issues": final_issues,
         "resolved_issues": resolved,
         "remaining_high": sum(
-            1 for i in qc_report_final.get("issues", [])
-            if isinstance(i, dict) and i.get("severity") == "HIGH"
+            1 for i in qc_report_final.get("issues", []) if isinstance(i, dict) and i.get("severity") == "HIGH"
         ),
         "remaining_issues": qc_report_final.get("issues", []),
         "resolution_rate": int(resolved / draft_issues * 100) if draft_issues > 0 else 0,
     }
+
+
+def _stage_ingest() -> None:
+    """Stage 1-2: ingest input documents and load the retrieval layer."""
+    chunks = ingestion.process_documents()
+    files_in = len({chunk["source_file"] for chunk in chunks})
+    print(f"Stage 1: Ingestion completed. Created {len(chunks)} chunks from {files_in} files.")
+
+    chunks = retrieval.load_chunks()
+    print(f"Stage 2: Retrieval ready. {len(chunks)} chunks loaded.")
+
+
+def _stage_outline(client: DeepSeekClient) -> dict:
+    """Stage 3: generate the report outline."""
+    logging.info("Stage 3: Outline Generation")
+    from src.outline_generator import OutlineGenerator, load_input_files
+
+    brief, methodology, market_data = load_input_files()
+    generator = OutlineGenerator(client)
+    outline = generator.generate_outline(brief, methodology, market_data)
+
+    logging.info(f"Generated outline with {len(outline['outline'])} sections")
+    logging.info(f"Estimated total pages: {outline['total_estimated_pages']}")
+
+    # Pretty print the outline to the console
+    for section in outline["outline"]:
+        logging.info(f"  {section['section_number']}. {section['title']}")
+    return outline
+
+
+def _stage_sections(client: DeepSeekClient, outline: dict) -> tuple[dict, list, str]:
+    """Stage 4: generate all report sections."""
+    logging.info("Stage 4: Section Generation")
+    from src.section_generator import SectionGenerator
+
+    all_chunks = load_json(CHUNKS_PATH)
+
+    with open(INPUT_DIR / "methodology.md", encoding="utf-8") as f:
+        methodology_text = f.read()
+
+    generator = SectionGenerator(client)
+    sections = generator.generate_all_sections(outline, all_chunks, methodology_text)
+
+    logging.info(f"Generated {len(sections)} sections")
+    return sections, all_chunks, methodology_text
+
+
+def _stage_review(client: DeepSeekClient, sections: dict, outline: dict, methodology_text: str) -> tuple[object, dict]:
+    """Stage 5: run the AI quality review."""
+    logging.info("Stage 5: AI Quality Review")
+    from src.qc_reviewer import QCReviewer
+
+    qc_reviewer = QCReviewer(client)
+    qc_report = qc_reviewer.review_sections(sections, outline, methodology_text)
+
+    logging.info(f"QC found {len(qc_report['issues'])} issues")
+    logging.info(f"  HIGH: {sum(1 for i in qc_report['issues'] if i['severity'] == 'HIGH')}")
+    logging.info(f"  MEDIUM: {sum(1 for i in qc_report['issues'] if i['severity'] == 'MEDIUM')}")
+    logging.info(f"  LOW: {sum(1 for i in qc_report['issues'] if i['severity'] == 'LOW')}")
+    logging.info(f"Overall Score: {qc_report['overall_score']}/100")
+    return qc_reviewer, qc_report
+
+
+def _stage_revision(
+    client: DeepSeekClient,
+    sections: dict,
+    outline: dict,
+    methodology_text: str,
+    all_chunks: list,
+    qc_reviewer,
+    qc_report: dict,
+) -> tuple[dict, dict]:
+    """Stage 6-6.5: fix HIGH issues, then run the final QC pass."""
+    high_issues = qc_reviewer.get_high_severity_issues(qc_report)
+    if high_issues:
+        logging.info(f"Stage 6: Revision Loop - fixing {len(high_issues)} HIGH issues")
+        from src.revision_loop import RevisionLoop
+
+        revision_loop = RevisionLoop(client, all_chunks, methodology_text)
+        sections = revision_loop.fix_sections(sections, outline, high_issues)
+        logging.info("Revision complete. Sections updated.")
+    else:
+        logging.info("Stage 6: No HIGH issues found. Skipping revision.")
+
+    logging.info("Stage 6.5: Final QC Review (post-revision)")
+    qc_report_final = qc_reviewer.review_sections(sections, outline, methodology_text)
+
+    logging.info(f"Final QC Score: {qc_report_final['overall_score']}/100")
+    logging.info(f"Final issues: {len(qc_report_final['issues'])}")
+    logging.info(f"  HIGH: {sum(1 for i in qc_report_final['issues'] if i['severity'] == 'HIGH')}")
+    logging.info(f"  MEDIUM: {sum(1 for i in qc_report_final['issues'] if i['severity'] == 'MEDIUM')}")
+    logging.info(f"  LOW: {sum(1 for i in qc_report_final['issues'] if i['severity'] == 'LOW')}")
+
+    initial_score = qc_report["overall_score"]
+    final_score = qc_report_final["overall_score"]
+    initial_issues = len(qc_report["issues"])
+    resolved_issues = count_resolved_issues(qc_report["issues"], qc_report_final["issues"])
+
+    logging.info(f"Quality Improvement: {initial_score} → {final_score} (+{final_score - initial_score})")
+    logging.info(f"Issues Resolved: {resolved_issues}/{initial_issues}")
+
+    # IMPORTANT: at most one extra QC pass after revision (no recursion).
+    # If HIGH issues remain after the second pass, report them as "known limitations".
+    if qc_report_final["issues"]:
+        remaining_high = [i for i in qc_report_final["issues"] if i["severity"] == "HIGH"]
+        if remaining_high:
+            logging.warning(f"{len(remaining_high)} HIGH issues remain after revision — marked as known limitations")
+    return sections, qc_report_final
+
+
+def _stage_assemble(sections: dict, outline: dict, qc_report: dict, qc_report_final: dict) -> dict:
+    """Stage 7: assemble the DOCX report and QC markdown, then build metrics."""
+    logging.info("Stage 7: Document Assembly")
+    from src.document_assembler import DocumentAssembler
+
+    assembler = DocumentAssembler()
+    doc_path = assembler.assemble_document(sections, outline, qc_report_final)  # use the final report
+    qc_report_path = assembler.generate_quality_report(qc_report, qc_report_final)  # pass both for comparison
+
+    logging.info(f"Final report saved to: {doc_path}")
+    logging.info(f"QC report saved to: {qc_report_path}")
+    logging.info("Pipeline completed successfully!")
+
+    return _build_metrics(qc_report, qc_report_final)
 
 
 def run_full_pipeline() -> dict:
@@ -115,118 +207,16 @@ def run_full_pipeline() -> dict:
     load_env()
     validate_input_dir(INPUT_DIR)
 
-    log = logging.getLogger("run_pipeline")
-
-    # --- Stage 1: Ingestion -------------------------------------------------
-    chunks = ingestion.process_documents()
-    files_in = len({chunk["source_file"] for chunk in chunks})
-    print(f"Stage 1: Ingestion completed. Created {len(chunks)} chunks from {files_in} files.")
-
-    # --- Stage 2: Retrieval layer -------------------------------------------
-    chunks = retrieval.load_chunks()
-    print(f"Stage 2: Retrieval ready. {len(chunks)} chunks loaded.")
-
-    # --- Stage 3: Outline Generation -----------------------------------------
-    logging.info("Stage 3: Outline Generation")
-    from src.llm_client import DeepSeekClient
-    from src.outline_generator import OutlineGenerator, load_input_files
+    _stage_ingest()
 
     client = DeepSeekClient()
-    brief, methodology, market_data = load_input_files()
-    generator = OutlineGenerator(client)
-    outline = generator.generate_outline(brief, methodology, market_data)
-
-    logging.info(f"Generated outline with {len(outline['outline'])} sections")
-    logging.info(f"Estimated total pages: {outline['total_estimated_pages']}")
-
-    # Pretty print outline в консоль
-    for section in outline['outline']:
-        logging.info(f"  {section['section_number']}. {section['title']}")
-
-    # --- Stage 4: Section Generation -----------------------------------------
-    logging.info("Stage 4: Section Generation")
-    from src.section_generator import SectionGenerator
-
-    # Загружаем chunks
-    all_chunks = load_json("project_state/chunks.json")
-
-    # Загружаем methodology
-    with open(INPUT_DIR / "methodology.md", "r", encoding="utf-8") as f:
-        methodology_text = f.read()
-
-    # Генерируем все разделы
-    generator = SectionGenerator(client)
-    sections = generator.generate_all_sections(outline, all_chunks, methodology_text)
-
-    logging.info(f"Generated {len(sections)} sections")
-
-    # --- Stage 5: AI Quality Review -----------------------------------------
-    logging.info("Stage 5: AI Quality Review")
-    from src.qc_reviewer import QCReviewer
-
-    qc_reviewer = QCReviewer(client)
-    qc_report = qc_reviewer.review_sections(sections, outline, methodology_text)
-
-    logging.info(f"QC found {len(qc_report['issues'])} issues")
-    logging.info(f"  HIGH: {sum(1 for i in qc_report['issues'] if i['severity'] == 'HIGH')}")
-    logging.info(f"  MEDIUM: {sum(1 for i in qc_report['issues'] if i['severity'] == 'MEDIUM')}")
-    logging.info(f"  LOW: {sum(1 for i in qc_report['issues'] if i['severity'] == 'LOW')}")
-    logging.info(f"Overall Score: {qc_report['overall_score']}/100")
-
-    # --- Stage 6: Revision Loop (if HIGH issues found) ----------------------
-    high_issues = qc_reviewer.get_high_severity_issues(qc_report)
-    if high_issues:
-        logging.info(f"Stage 6: Revision Loop - fixing {len(high_issues)} HIGH issues")
-        from src.revision_loop import RevisionLoop
-
-        revision_loop = RevisionLoop(client, all_chunks, methodology_text)
-        sections = revision_loop.fix_sections(sections, outline, high_issues)
-        logging.info("Revision complete. Sections updated.")
-    else:
-        logging.info("Stage 6: No HIGH issues found. Skipping revision.")
-
-    # --- Stage 6.5: Final QC Review (после исправлений) ---------------------
-    logging.info("Stage 6.5: Final QC Review (post-revision)")
-    qc_report_final = qc_reviewer.review_sections(sections, outline, methodology_text)
-
-    logging.info(f"Final QC Score: {qc_report_final['overall_score']}/100")
-    logging.info(f"Final issues: {len(qc_report_final['issues'])}")
-    logging.info(f"  HIGH: {sum(1 for i in qc_report_final['issues'] if i['severity'] == 'HIGH')}")
-    logging.info(f"  MEDIUM: {sum(1 for i in qc_report_final['issues'] if i['severity'] == 'MEDIUM')}")
-    logging.info(f"  LOW: {sum(1 for i in qc_report_final['issues'] if i['severity'] == 'LOW')}")
-
-    # Вычисляем метрики улучшения
-    initial_score = qc_report['overall_score']
-    final_score = qc_report_final['overall_score']
-    initial_issues = len(qc_report['issues'])
-    final_issues = len(qc_report_final['issues'])
-    resolved_issues = count_resolved_issues(qc_report['issues'], qc_report_final['issues'])
-
-    logging.info(f"Quality Improvement: {initial_score} → {final_score} (+{final_score - initial_score})")
-    logging.info(f"Issues Resolved: {resolved_issues}/{initial_issues}")
-
-    # ВАЖНО: Максимум 1 дополнительный QC-прогон после revision (без рекурсии)
-    # Если после второго прогона остались HIGH issues — выводим их как "known limitations"
-    if qc_report_final['issues']:
-        remaining_high = [i for i in qc_report_final['issues'] if i['severity'] == 'HIGH']
-        if remaining_high:
-            logging.warning(
-                f"{len(remaining_high)} HIGH issues remain after revision — marked as known limitations"
-            )
-
-    # --- Stage 7: Document Assembly ------------------------------------------
-    logging.info("Stage 7: Document Assembly")
-    from src.document_assembler import DocumentAssembler
-
-    assembler = DocumentAssembler()
-    doc_path = assembler.assemble_document(sections, outline, qc_report_final)  # используем финальный
-    qc_report_path = assembler.generate_quality_report(qc_report, qc_report_final)  # передаём оба для сравнения
-
-    logging.info(f"Final report saved to: {doc_path}")
-    logging.info(f"QC report saved to: {qc_report_path}")
-    logging.info("Pipeline completed successfully!")
-
-    return _build_metrics(qc_report, qc_report_final)
+    outline = _stage_outline(client)
+    sections, all_chunks, methodology_text = _stage_sections(client, outline)
+    qc_reviewer, qc_report = _stage_review(client, sections, outline, methodology_text)
+    sections, qc_report_final = _stage_revision(
+        client, sections, outline, methodology_text, all_chunks, qc_reviewer, qc_report
+    )
+    return _stage_assemble(sections, outline, qc_report, qc_report_final)
 
 
 def main() -> int:
