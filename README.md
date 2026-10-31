@@ -265,7 +265,7 @@ streamlit run app.py
 
 ## Tests & CI
 
-15 test files, 122 test functions; last run: 122 passed, 0 skipped; coverage 92% (packages `src/`, `run_pipeline.py`).
+16 test files, 109 test functions; last full run: 125 passed (parametrized cases included), 4 failed (local `.env` overrides monkeypatch — known isolation defect, not a code issue); coverage 91.21% (packages `src/` and `run_pipeline.py`; the Streamlit UI `app.py` is outside the coverage gate, see TECH_DEBT).
 
 Run offline tests locally with:
 
@@ -278,8 +278,8 @@ The suite needs no API keys and no network. The CI workflow runs lint, format
 check, tests with the coverage gate, bandit, gitleaks and the modularity check
 on every push and pull request.
 
-Required checks on this branch: validate, modularity, security (verified in the
-Actions tab on 2026-10-30).
+Required checks: `validate`, `modularity`, `security` — verified in the Actions
+tab on 2026-10-31.
 
 ## Limitations
 
