@@ -84,7 +84,7 @@ def _show_metrics(output):
 
     with col3:
         st.metric(
-            label="Issues Resolved",
+            label="Draft Issues No Longer Reported",
             value=f"{output['resolved_issues']}/{output['draft_issues']}",
             delta=f"{output['resolution_rate']}%",
         )

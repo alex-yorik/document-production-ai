@@ -19,9 +19,6 @@ Discovery date for open items: 2026-10-29.
 - **`app.py` is outside the coverage gate.** Streamlit UI logic was extracted to
   `src/upload_utils.py` and is covered there, but `app.py` itself is not measured.
   This is an owner-approved deviation from TST-04 (Q4). (2026-10-29)
-- **`demo/expected/` needs a rebuild.** The stored outputs predate the PA-02 and
-  PA-05 fixes. Rebuilding requires the owner's API key (owner task O-01).
-  (2026-10-29)
 
 ## Closed / Replaced
 
@@ -31,6 +28,9 @@ Discovery date for open items: 2026-10-29.
 
 ## Closed
 
+- **2026-10-31 — `demo/expected/` rebuilt.** The stored outputs now reflect the
+  current pipeline. Rebuilt with dual-LLM architecture (GPT-4o-mini +
+  GLM-5.3-Flash).
 - **2026-10-29 — obsolete image-todo note.** The `docs` image-todo markdown file
   was removed with `git rm`; the pending idea (an optional architecture image) is
   not blocking publication.

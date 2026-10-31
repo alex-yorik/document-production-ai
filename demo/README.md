@@ -29,5 +29,6 @@ Russian-language brief); all companies and figures there are fictional too.
 `demo/expected/` shows what a real run produced on this dataset, so you can
 compare your own result with a historical baseline.
 
-> Expected outputs were generated before fixes PA-02/PA-05
-> (historical record dated 2026-10-08). Current results: see docs/reports/portfolio-audit-report.md
+**Last updated:** 2026-10-31 | **Commit:** 2c9bce5  
+**Models:** GPT-4o-mini (generator), GLM-5.3-Flash (QC)  
+**Dataset:** Northwind (English), synthetic

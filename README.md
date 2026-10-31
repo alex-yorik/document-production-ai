@@ -98,26 +98,27 @@ QC has two parts:
 The reviewer is AI-assisted and does not guarantee the absence of
 hallucinations; remaining issues are reported for human review.
 
-### Demo results
+### Demo Results
 
-> Result of one run on one synthetic dataset, a single sample, not a benchmark.
+**Dataset:** Northwind (demo/input/), synthetic English-language brief  
+**Models:** GPT-4o-mini (generator), GLM-5.3-Flash (QC)  
+**Date:** 2026-10-31 | **Commit:** 2c9bce5
 
-Latest run (dual-LLM architecture: GPT-4o-mini for generation, GLM-5.3-Flash
-for QC review):
+| Metric | Value |
+|--------|-------|
+| Draft Quality Score | 58/100 |
+| Final Quality Score | 62/100 |
+| Score Improvement | +4 |
+| Draft Issues | 18 (HIGH: 12, MEDIUM: 5, LOW: 1) |
+| Final Issues | 17 (HIGH: 11, MEDIUM: 5, LOW: 1) |
+| Draft Issues No Longer Reported | 18/18 (100%) |
+| Sections Improved | 5 |
 
-| Metric        | Draft                        | Final (after revision)       |
-| ------------- | ---------------------------- | ---------------------------- |
-| Quality score | 62/100                       | 74/100                       |
-| Issues        | 12 (6 HIGH, 5 MEDIUM, 1 LOW) | 11 (2 HIGH, 8 MEDIUM, 1 LOW) |
+*One run, one synthetic dataset, not a benchmark.*
 
-- Score improvement: 62 → 74 (+12)
-- Issues resolved: 12/12 (100%)
-- Sections improved: 5
-- 2 HIGH-severity issues remain, flagged for human review.
+*An issue counts as "no longer reported" also when it was rephrased or downgraded; this is not a semantic verification.*
 
-Raw output: `demo/expected/QC_Report.md`. See
-[docs/reports/portfolio-audit-report.md](docs/reports/portfolio-audit-report.md)
-for the audit context.
+**Raw output:** [demo/expected/QC_Report.md](demo/expected/QC_Report.md)
 
 ## Revision Loop
 
@@ -142,21 +143,9 @@ data is used anywhere in this repository.
 `input/` is a second sample dataset (EdTech in Southeast Asia, Russian-language
 brief). All companies and figures are fictional; none are real.
 
-![Pipeline](docs/pipeline.png)
-
-![QC Report](docs/qc-report.png)
-
-![Final Document](docs/final-document.png)
-
 ## Screenshots
 
-### Main Interface
-
-![Demo Main Screen](docs/assets/demo_main_screen.png)
-
-### QC Report with Metrics
-
-![QC Report](docs/assets/demo_qc_report.png)
+Screenshots pending update from latest run.
 
 ## Tech Stack
 

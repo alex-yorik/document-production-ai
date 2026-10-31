@@ -56,7 +56,7 @@ def test_report_and_build_metrics_agree_on_resolved(tmp_path, monkeypatch):
     }
     metrics_resolved = _build_metrics(draft, final)["resolved_issues"]
     text = _write_report(tmp_path, monkeypatch, draft, final)
-    assert f"Issues Resolved: {metrics_resolved}/{len(draft['issues'])}" in text
+    assert f"Draft Issues No Longer Reported: {metrics_resolved}/{len(draft['issues'])}" in text
 
 
 def test_resolved_never_negative_in_report(tmp_path, monkeypatch):
@@ -69,8 +69,8 @@ def test_resolved_never_negative_in_report(tmp_path, monkeypatch):
         ],
     }
     text = _write_report(tmp_path, monkeypatch, draft, final)
-    assert "Issues Resolved: 0/0" in text
-    assert "Issues Resolved: -" not in text
+    assert "Draft Issues No Longer Reported: 0/0" in text
+    assert "Draft Issues No Longer Reported: -" not in text
 
 
 def test_negative_score_delta_not_rendered_as_plus_minus(tmp_path, monkeypatch):
@@ -85,4 +85,4 @@ def test_issue_without_severity_does_not_raise_in_report(tmp_path, monkeypatch):
     draft = {"overall_score": 60, "issues": [{"section": "1", "description": "no sev"}]}
     final = {"overall_score": 60, "issues": [{"section": "2", "description": "no sev"}]}
     text = _write_report(tmp_path, monkeypatch, draft, final)
-    assert "Issues Resolved: 1/1" in text
+    assert "Draft Issues No Longer Reported: 1/1" in text
