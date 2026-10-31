@@ -6,8 +6,8 @@ Stages:
     3. Outline generation: build the report structure via LLM.
     4. Section generation: write each section with LLM + retrieval.
     5. AI Quality Review: run the QC reviewer over the generated sections.
-    6. Revision loop: fix HIGH severity issues by regenerating sections.
-    6.5. Final QC review: re-run the reviewer after revisions for before/after metrics.
+    6. Revision loop: iteratively fix HIGH/MEDIUM issues until convergence.
+    6.5. Final strict QC review: re-run the reviewer after revisions.
     7. Document assembly: export the report to DOCX in output/.
 """
 
@@ -50,7 +50,7 @@ def validate_input_dir(input_dir: Path) -> None:
         )
 
 
-def _build_metrics(qc_report: dict, qc_report_final: dict) -> dict:
+def _build_metrics(qc_report: dict, qc_report_final: dict, revision_metrics: dict | None = None) -> dict:
     """Compute before/after quality metrics for the UI."""
     draft_issues = len(qc_report.get("issues", []))
     final_issues = len(qc_report_final.get("issues", []))
@@ -58,7 +58,7 @@ def _build_metrics(qc_report: dict, qc_report_final: dict) -> dict:
         qc_report.get("issues", []),
         qc_report_final.get("issues", []),
     )
-    return {
+    metrics = {
         "draft_score": qc_report.get("overall_score", 0),
         "final_score": qc_report_final.get("overall_score", 0),
         "draft_issues": draft_issues,
@@ -70,6 +70,16 @@ def _build_metrics(qc_report: dict, qc_report_final: dict) -> dict:
         "remaining_issues": qc_report_final.get("issues", []),
         "resolution_rate": int(resolved / draft_issues * 100) if draft_issues > 0 else 0,
     }
+    if revision_metrics is not None:
+        metrics.update(
+            {
+                "revision_iterations": revision_metrics.get("revision_iterations", 0),
+                "issues_per_iteration": revision_metrics.get("issues_per_iteration", []),
+                "convergence_status": revision_metrics.get("convergence_status", "reached"),
+                "improvement_score": draft_issues - final_issues,
+            }
+        )
+    return metrics
 
 
 def _stage_ingest() -> None:
@@ -141,21 +151,37 @@ def _stage_revision(
     all_chunks: list,
     qc_reviewer,
     qc_report: dict,
-) -> tuple[dict, dict]:
-    """Stage 6-6.5: fix HIGH issues, then run the final QC pass."""
-    high_issues = qc_reviewer.get_high_severity_issues(qc_report)
-    if high_issues:
-        logging.info(f"Stage 6: Revision Loop - fixing {len(high_issues)} HIGH issues")
-        from src.revision_loop import RevisionLoop
+) -> tuple[dict, dict, dict]:
+    """Stage 6-6.5: iteratively fix issues, then run the final strict QC pass."""
+    from src.revision_loop import MAX_ITERATIONS, RevisionLoop
 
-        revision_loop = RevisionLoop(client, all_chunks, methodology_text)
-        sections = revision_loop.fix_sections(sections, outline, high_issues)
-        logging.info("Revision complete. Sections updated.")
-    else:
-        logging.info("Stage 6: No HIGH issues found. Skipping revision.")
+    revision_loop = RevisionLoop(client, all_chunks, methodology_text)
 
-    logging.info("Stage 6.5: Final QC Review (post-revision)")
-    qc_report_final = qc_reviewer.review_sections(sections, outline, methodology_text)
+    def _intermediate_qc(revised_sections: dict) -> dict:
+        return qc_reviewer.review_sections(revised_sections, outline, methodology_text, strict=False)
+
+    actionable = [i for i in qc_report.get("issues", []) if isinstance(i, dict) and i.get("severity") != "LOW"]
+    logging.info(
+        "Stage 6: Iterative Revision Loop (max %d iterations, %d actionable issues)",
+        MAX_ITERATIONS,
+        len(actionable),
+    )
+    sections, _last_review, revision_metrics = revision_loop.run(
+        sections,
+        outline,
+        qc_report,
+        _intermediate_qc,
+        max_iterations=MAX_ITERATIONS,
+    )
+    logging.info(
+        "Revision iterations: %d | issues per iteration: %s | convergence: %s",
+        revision_metrics["revision_iterations"],
+        revision_metrics["issues_per_iteration"],
+        revision_metrics["convergence_status"],
+    )
+
+    logging.info("Stage 6.5: Final QC Review (post-revision, strict)")
+    qc_report_final = qc_reviewer.review_sections(sections, outline, methodology_text, strict=True)
 
     logging.info(f"Final QC Score: {qc_report_final['overall_score']}/100")
     logging.info(f"Final issues: {len(qc_report_final['issues'])}")
@@ -171,16 +197,22 @@ def _stage_revision(
     logging.info(f"Quality Improvement: {initial_score} → {final_score} (+{final_score - initial_score})")
     logging.info(f"Issues Resolved: {resolved_issues}/{initial_issues}")
 
-    # IMPORTANT: at most one extra QC pass after revision (no recursion).
-    # If HIGH issues remain after the second pass, report them as "known limitations".
+    # IMPORTANT: at most MAX_ITERATIONS revision passes, then one final strict QC.
+    # If HIGH issues remain after that, report them as "known limitations".
     if qc_report_final["issues"]:
         remaining_high = [i for i in qc_report_final["issues"] if i["severity"] == "HIGH"]
         if remaining_high:
             logging.warning(f"{len(remaining_high)} HIGH issues remain after revision — marked as known limitations")
-    return sections, qc_report_final
+    return sections, qc_report_final, revision_metrics
 
 
-def _stage_assemble(sections: dict, outline: dict, qc_report: dict, qc_report_final: dict) -> dict:
+def _stage_assemble(
+    sections: dict,
+    outline: dict,
+    qc_report: dict,
+    qc_report_final: dict,
+    revision_metrics: dict,
+) -> dict:
     """Stage 7: assemble the DOCX report and QC markdown, then build metrics."""
     logging.info("Stage 7: Document Assembly")
     from src.document_assembler import DocumentAssembler
@@ -193,7 +225,7 @@ def _stage_assemble(sections: dict, outline: dict, qc_report: dict, qc_report_fi
     logging.info(f"QC report saved to: {qc_report_path}")
     logging.info("Pipeline completed successfully!")
 
-    return _build_metrics(qc_report, qc_report_final)
+    return _build_metrics(qc_report, qc_report_final, revision_metrics)
 
 
 def run_full_pipeline() -> dict:
@@ -201,7 +233,9 @@ def run_full_pipeline() -> dict:
 
     Returns:
         dict with keys: draft_score, final_score, draft_issues, final_issues,
-        resolved_issues, remaining_high, remaining_issues, resolution_rate.
+        resolved_issues, remaining_high, remaining_issues, resolution_rate,
+        revision_iterations, issues_per_iteration, convergence_status,
+        improvement_score.
     """
     setup_logging()
     load_env()
@@ -213,10 +247,10 @@ def run_full_pipeline() -> dict:
     outline = _stage_outline(client)
     sections, all_chunks, methodology_text = _stage_sections(client, outline)
     qc_reviewer, qc_report = _stage_review(client, sections, outline, methodology_text)
-    sections, qc_report_final = _stage_revision(
+    sections, qc_report_final, revision_metrics = _stage_revision(
         client, sections, outline, methodology_text, all_chunks, qc_reviewer, qc_report
     )
-    return _stage_assemble(sections, outline, qc_report, qc_report_final)
+    return _stage_assemble(sections, outline, qc_report, qc_report_final, revision_metrics)
 
 
 def main() -> int:

@@ -16,6 +16,20 @@ QC_REPORT_PATH = STATE_DIR / "qc_report.json"
 
 SEVERITY_ORDER = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
 
+STRICT_MODE_PROMPT = """
+## Strict mode (final review)
+Apply the strictest criteria: report every unsupported claim, every missing key
+point, and every traceability gap. Prefer catching a real issue over avoiding a
+false positive. Only downgrade an issue when the source clearly supports it.
+"""
+
+LENIENT_MODE_PROMPT = """
+## Lenient mode (intermediate review)
+Focus on HIGH-confidence, actionable issues (HIGH and MEDIUM). Ignore borderline
+LOW-severity style and phrasing concerns; they are handled separately by human
+review. Do not invent issues that are not clearly supported by the source data.
+"""
+
 NUMERIC_ISSUE_TYPE = "numeric_traceability_check"
 NUMERIC_PATTERN = re.compile(r"\d+\.?\d*%|\$\d+\.?\d*[BMK]?", re.IGNORECASE)
 _PERCENT_WORD_PATTERN = re.compile(r"\s+percent\b")
@@ -148,7 +162,7 @@ class QCReviewer:
 
         return {"issues": issues}
 
-    def _build_messages(self, sections: dict, outline: dict, methodology_text: str) -> list[dict]:
+    def _build_messages(self, sections: dict, outline: dict, methodology_text: str, strict: bool = True) -> list[dict]:
         user_prompt = f"""
 Review the following document sections against the outline and methodology.
 
@@ -163,8 +177,9 @@ Generated Sections:
 
 Be strict and thorough. Identify ALL issues, even minor ones.
 """
+        system_prompt = SYSTEM_PROMPT + (STRICT_MODE_PROMPT if strict else LENIENT_MODE_PROMPT)
         return [
-            format_system_message(SYSTEM_PROMPT),
+            format_system_message(system_prompt),
             format_user_message(user_prompt),
         ]
 
@@ -197,11 +212,23 @@ Be strict and thorough. Identify ALL issues, even minor ones.
             logger.warning("QC review attempt 1 failed (%s); retrying with larger token budget", exc)
         return self.client.chat_completion_json(messages, temperature=QC_TEMPERATURE, max_tokens=QC_MAX_TOKENS * 2)
 
-    def review_sections(self, sections: dict, outline: dict, methodology_text: str) -> dict:
-        """Run the QC review and persist the report to the state directory."""
+    def review_sections(
+        self,
+        sections: dict,
+        outline: dict,
+        methodology_text: str,
+        strict: bool = True,
+    ) -> dict:
+        """Run the QC review and persist the report to the state directory.
+
+        Args:
+            strict: Final-review mode with stricter criteria when True.
+                Intermediate iterations use ``strict=False`` to focus on
+                HIGH/MEDIUM issues and ignore borderline LOW cases.
+        """
         self._ensure_chunks()
 
-        messages = self._build_messages(sections, outline, methodology_text)
+        messages = self._build_messages(sections, outline, methodology_text, strict=strict)
         try:
             review = self._request_review(messages)
         except Exception as exc:  # noqa: BLE001 — fall back to a zero-score report on any failure
@@ -215,6 +242,12 @@ Be strict and thorough. Identify ALL issues, even minor ones.
         review = self._normalize_review(review)
         numeric = self._check_numeric_traceability(sections)
         review["issues"] = self._merge_issues(review.get("issues"), numeric.get("issues", []))
+        if not strict:
+            review["issues"] = [
+                issue
+                for issue in review["issues"]
+                if isinstance(issue, dict) and issue.get("severity") in ("HIGH", "MEDIUM")
+            ]
         review["issues"].sort(key=lambda i: SEVERITY_ORDER.get(i.get("severity"), 9))
 
         save_json(review, QC_REPORT_PATH)
