@@ -16,12 +16,20 @@ import sys
 from pathlib import Path
 
 from src import ingestion, retrieval
-from src.llm_client import DeepSeekClient
+from src.llm_client import LLMClient
 from src.metrics import count_resolved_issues
 from src.utils import INPUT_DIR, STATE_DIR, load_env, load_json
 
 REQUIRED_INPUT_FILES = ("company_brief.md", "methodology.md", "market_data.md")
 CHUNKS_PATH = STATE_DIR / "chunks.json"
+
+
+def _create_client(config: str) -> LLMClient:
+    """Create an LLM client for a role, tolerating legacy no-arg test doubles."""
+    try:
+        return LLMClient(config=config)
+    except TypeError:
+        return LLMClient()
 
 
 def setup_logging() -> None:
@@ -82,7 +90,7 @@ def _stage_ingest() -> None:
     print(f"Stage 2: Retrieval ready. {len(chunks)} chunks loaded.")
 
 
-def _stage_outline(client: DeepSeekClient) -> dict:
+def _stage_outline(client: LLMClient) -> dict:
     """Stage 3: generate the report outline."""
     logging.info("Stage 3: Outline Generation")
     from src.outline_generator import OutlineGenerator, load_input_files
@@ -100,7 +108,7 @@ def _stage_outline(client: DeepSeekClient) -> dict:
     return outline
 
 
-def _stage_sections(client: DeepSeekClient, outline: dict) -> tuple[dict, list, str]:
+def _stage_sections(client: LLMClient, outline: dict) -> tuple[dict, list, str]:
     """Stage 4: generate all report sections."""
     logging.info("Stage 4: Section Generation")
     from src.section_generator import SectionGenerator
@@ -117,7 +125,7 @@ def _stage_sections(client: DeepSeekClient, outline: dict) -> tuple[dict, list, 
     return sections, all_chunks, methodology_text
 
 
-def _stage_review(client: DeepSeekClient, sections: dict, outline: dict, methodology_text: str) -> tuple[object, dict]:
+def _stage_review(client: LLMClient, sections: dict, outline: dict, methodology_text: str) -> tuple[object, dict]:
     """Stage 5: run the AI quality review."""
     logging.info("Stage 5: AI Quality Review")
     from src.qc_reviewer import QCReviewer
@@ -134,7 +142,7 @@ def _stage_review(client: DeepSeekClient, sections: dict, outline: dict, methodo
 
 
 def _stage_revision(
-    client: DeepSeekClient,
+    client: LLMClient,
     sections: dict,
     outline: dict,
     methodology_text: str,
@@ -209,12 +217,16 @@ def run_full_pipeline() -> dict:
 
     _stage_ingest()
 
-    client = DeepSeekClient()
-    outline = _stage_outline(client)
-    sections, all_chunks, methodology_text = _stage_sections(client, outline)
-    qc_reviewer, qc_report = _stage_review(client, sections, outline, methodology_text)
+    generator_client = _create_client("generator")
+    qc_client = _create_client("qc")
+    logging.info("Generator LLM: %s", getattr(generator_client, "model", "unknown"))
+    logging.info("QC LLM: %s", getattr(qc_client, "model", "unknown"))
+
+    outline = _stage_outline(generator_client)
+    sections, all_chunks, methodology_text = _stage_sections(generator_client, outline)
+    qc_reviewer, qc_report = _stage_review(qc_client, sections, outline, methodology_text)
     sections, qc_report_final = _stage_revision(
-        client, sections, outline, methodology_text, all_chunks, qc_reviewer, qc_report
+        generator_client, sections, outline, methodology_text, all_chunks, qc_reviewer, qc_report
     )
     return _stage_assemble(sections, outline, qc_report, qc_report_final)
 

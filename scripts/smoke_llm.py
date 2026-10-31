@@ -1,6 +1,6 @@
-"""Manual live check of the DeepSeek client and keyword retrieval.
+"""Manual live check of the OpenRouter LLM client and keyword retrieval.
 
-This is a manual live check, needs DEEPSEEK_API_KEY, not part of the test suite.
+This is a manual live check, needs LLM_API_KEY, not part of the test suite.
 Run from the repository root: python3 scripts/smoke_llm.py
 """
 
@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.llm_client import DeepSeekClient
+from src.llm_client import LLMClient
 from src.retrieval import keyword_search, load_chunks
 from src.utils import load_env
 
@@ -31,7 +31,7 @@ def test_llm() -> None:
         {"role": "system", "content": "You are a helpful assistant."},
         {"role": "user", "content": "What is the capital of France?"},
     ]
-    client = DeepSeekClient()
+    client = LLMClient()
     response = client.chat_completion(messages, temperature=0.3)
     print("\nLLM response:", response)
     print("✅ LLM client works!")

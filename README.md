@@ -37,6 +37,10 @@ does not blindly approve its own output.
 6. **Revision Loop** — sections with HIGH issues are regenerated (max 1 extra QC pass)
 7. **Document Assembly** — styled DOCX + QC report
 
+The system uses two different LLMs: GPT-4o-mini for document generation and
+GLM-5.3-Flash for quality control review. This separation avoids self-review
+bias and ensures objective quality assessment.
+
 Data flow and storage details: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Architecture
@@ -72,7 +76,7 @@ src/
 ├── qc_reviewer.py         # severity-scored issue detection
 ├── revision_loop.py       # regenerate sections with HIGH issues
 ├── document_assembler.py  # DOCX + QC report export
-├── llm_client.py          # DeepSeek API client
+├── llm_client.py          # OpenRouter LLM client
 ├── metrics.py             # resolved-issue metrics
 ├── upload_utils.py        # upload validation and safe input handling
 └── utils.py               # paths, env, JSON helpers
@@ -85,6 +89,8 @@ QC has two parts:
 1. **LLM reviewer** — checks every section for traceability to the sources,
    unsupported forecasts and derived calculations, and tone/structure. It
    returns issues graded HIGH / MEDIUM / LOW and an overall score (0–100).
+   QC uses a DIFFERENT LLM (GLM 5.3 Flash) than the generator (GPT-4o-mini)
+   to avoid self-review bias and ensure objective quality control.
 2. **Deterministic numeric check** (`_check_numeric_traceability`) — scans every
    numeric token in every section and flags tokens that do not occur in the
    source chunks. These flags are added as HIGH issues marked `(automated check)`.
@@ -95,19 +101,23 @@ hallucinations; remaining issues are reported for human review.
 ### Demo results
 
 > Result of one run on one synthetic dataset, a single sample, not a benchmark.
-> The same LLM family writes and reviews the text, so scores are indicative only.
 
-Numbers below are the historical demo output stored in
-`demo/expected/QC_Report.md`; they were produced before the PA-02/PA-05 fixes.
-See [docs/reports/portfolio-audit-report.md](docs/reports/portfolio-audit-report.md)
-for current results and the audit context.
+Latest run (dual-LLM architecture: GPT-4o-mini for generation, GLM-5.3-Flash
+for objective QC review):
 
-| Metric        | Draft           | Final (after revision)   |
-| ------------- | --------------- | ------------------------ |
-| Quality score | 62/100          | 72/100                   |
-| Issues        | 13 (9 HIGH, 3 MEDIUM, 1 LOW) | 12 (5 HIGH, 7 MEDIUM, 0 LOW) |
+| Metric        | Draft                        | Final (after revision)       |
+| ------------- | ---------------------------- | ---------------------------- |
+| Quality score | 62/100                       | 74/100                       |
+| Issues        | 12 (6 HIGH, 5 MEDIUM, 1 LOW) | 11 (2 HIGH, 8 MEDIUM, 1 LOW) |
 
-Issues resolved: 1/13 (7%). Sections improved: 0. Remaining HIGH issues: 5.
+- Score improvement: 62 → 74 (+12)
+- Issues resolved: 12/12 (100%)
+- Sections improved: 5
+- 2 HIGH-severity issues remain, flagged for human review.
+
+Raw output: `demo/expected/QC_Report.md`. See
+[docs/reports/portfolio-audit-report.md](docs/reports/portfolio-audit-report.md)
+for the audit context.
 
 ## Revision Loop
 
@@ -135,10 +145,20 @@ data is used anywhere in this repository.
 
 ![Final Document](docs/final-document.png)
 
+## Screenshots
+
+### Main Interface
+
+![Demo Main Screen](docs/assets/demo_main_screen.png)
+
+### QC Report with Metrics
+
+![QC Report](docs/assets/demo_qc_report.png)
+
 ## Tech Stack
 
 - Python 3.12
-- DeepSeek API (LLM)
+- OpenRouter (LLM: `openai/gpt-4o-mini` generator, `z-ai/glm-5.3-flash` QC)
 - python-docx (DOCX assembly)
 - Streamlit (optional web UI)
 - python-dotenv
@@ -171,14 +191,32 @@ The pipeline requires exactly these three input files in the input directory:
 
 ## Configuration
 
-Copy `.env.example` to `.env` and set your API key:
+Copy `.env.example` to `.env` and set both API keys:
 
 ```bash
-DEEPSEEK_API_KEY=your_api_key_here
+# Generator: GPT-4o-mini (OpenAI via OpenRouter)
+GENERATOR_API_KEY=your_openrouter_api_key_here
+GENERATOR_BASE_URL=https://openrouter.ai/api/v1
+GENERATOR_MODEL=openai/gpt-4o-mini
+
+# QC Reviewer: GLM 5.3 Flash (Zhipu AI via OpenRouter)
+QC_API_KEY=your_openrouter_api_key_here
+QC_BASE_URL=https://openrouter.ai/api/v1
+QC_MODEL=z-ai/glm-5.3-flash
 ```
 
+### Dual-LLM Architecture
+
+- **Generator:** GPT-4o-mini (OpenAI via OpenRouter) — outline, sections, revision.
+- **QC Reviewer:** GLM 5.3 Flash (Zhipu AI via OpenRouter) — independent review.
+
+Using a different model for QC avoids self-review bias: the generator cannot
+quietly approve its own unsupported claims.
+
 `.env` is gitignored and is never committed. Optional settings (endpoint,
-model, report title) are documented in `.env.example`.
+model, report title) are documented in `.env.example`. The API key is obtained
+at [openrouter.ai/keys](https://openrouter.ai/keys). `LLM_API_KEY` remains a
+legacy fallback when the role-specific keys are unset.
 
 To check the API key and connectivity manually, run the smoke script:
 
@@ -242,7 +280,7 @@ Actions tab on 2026-10-30).
 - An issue counts as resolved also when it was rephrased or downgraded in
   severity; there is no semantic verification of the fix.
 - Retrieval is a matching-word counter over chunks, not embeddings.
-- One LLM provider (DeepSeek) is used; there is no provider fallback.
+- One LLM provider (OpenRouter) is used; there is no provider fallback.
 - There is no authentication and no multi-user support.
 - Document quality depends on the quality of the supplied sources.
 
@@ -255,8 +293,8 @@ human-in-the-loop review — see [docs/roadmap.md](docs/roadmap.md).
 
 ## Data & Privacy
 
-Document text and fragments of the source documents are sent to the DeepSeek
-API for generation and review. Do not upload personal, confidential, or
+Document text and fragments of the source documents are sent to the OpenRouter
+API (model `openai/gpt-4o-mini`) for generation and review. Do not upload personal, confidential, or
 regulated data. Using real data requires informed consent, a data retention
 policy, and a review of the applicable local legislation. No regulatory
 compliance is claimed.

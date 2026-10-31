@@ -37,8 +37,8 @@ def _success(content="hello", tokens=5):
 
 def _make_client(monkeypatch, key=SECRET):
     monkeypatch.setattr(llm_client, "load_dotenv", lambda *args, **kwargs: None)
-    monkeypatch.setenv("DEEPSEEK_API_KEY", key)
-    return llm_client.DeepSeekClient()
+    monkeypatch.setenv("LLM_API_KEY", key)
+    return llm_client.LLMClient()
 
 
 def _no_sleep(monkeypatch):
@@ -49,10 +49,10 @@ def _no_sleep(monkeypatch):
 
 def test_init_requires_api_key(monkeypatch):
     monkeypatch.setattr(llm_client, "load_dotenv", lambda *args, **kwargs: None)
-    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
 
-    with pytest.raises(ValueError, match="DEEPSEEK_API_KEY is not set"):
-        llm_client.DeepSeekClient()
+    with pytest.raises(ValueError, match="LLM_API_KEY is not set"):
+        llm_client.LLMClient()
 
 
 def test_chat_completion_success(monkeypatch):

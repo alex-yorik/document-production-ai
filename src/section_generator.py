@@ -4,7 +4,7 @@ import logging
 import re
 import time
 
-from src.llm_client import DeepSeekClient, format_system_message, format_user_message
+from src.llm_client import LLMClient, format_system_message, format_user_message
 from src.retrieval import format_context, get_relevant_chunks_for_section
 from src.utils import STATE_DIR, save_json
 
@@ -106,7 +106,7 @@ def validate_section(text: str, section: dict) -> list[str]:
 class SectionGenerator:
     """Write report sections via the LLM using retrieval-backed context."""
 
-    def __init__(self, client: DeepSeekClient) -> None:
+    def __init__(self, client: LLMClient) -> None:
         self.client = client
 
     def _build_messages(self, section: dict, all_chunks: list, methodology_text: str) -> list[dict[str, str]]:
