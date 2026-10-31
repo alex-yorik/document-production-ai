@@ -1,7 +1,7 @@
 """AI Quality Reviewer for generated report sections.
 
-Uses a separate QC LLM (GLM 5.3 Flash) for objective review, so the model
-that generated the text is not the model that checks it.
+Uses a separate QC LLM (GLM 5.3 Flash) for review. A different model reduces
+self-review bias but does not guarantee objective or correct review.
 """
 
 import json

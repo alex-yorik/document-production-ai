@@ -38,8 +38,8 @@ does not blindly approve its own output.
 7. **Document Assembly** — styled DOCX + QC report
 
 The system uses two different LLMs: GPT-4o-mini for document generation and
-GLM-5.3-Flash for quality control review. This separation avoids self-review
-bias and ensures objective quality assessment.
+GLM-5.3-Flash for quality control review. This separation reduces self-review
+bias; it does not guarantee objective or correct review.
 
 Data flow and storage details: [ARCHITECTURE.md](ARCHITECTURE.md).
 
@@ -90,7 +90,7 @@ QC has two parts:
    unsupported forecasts and derived calculations, and tone/structure. It
    returns issues graded HIGH / MEDIUM / LOW and an overall score (0–100).
    QC uses a DIFFERENT LLM (GLM 5.3 Flash) than the generator (GPT-4o-mini)
-   to avoid self-review bias and ensure objective quality control.
+   to reduce self-review bias; it does not guarantee objective or correct review.
 2. **Deterministic numeric check** (`_check_numeric_traceability`) — scans every
    numeric token in every section and flags tokens that do not occur in the
    source chunks. These flags are added as HIGH issues marked `(automated check)`.
@@ -103,7 +103,7 @@ hallucinations; remaining issues are reported for human review.
 > Result of one run on one synthetic dataset, a single sample, not a benchmark.
 
 Latest run (dual-LLM architecture: GPT-4o-mini for generation, GLM-5.3-Flash
-for objective QC review):
+for QC review):
 
 | Metric        | Draft                        | Final (after revision)       |
 | ------------- | ---------------------------- | ---------------------------- |
@@ -211,10 +211,10 @@ QC_MODEL=z-ai/glm-5.3-flash
 ### Dual-LLM Architecture
 
 - **Generator:** GPT-4o-mini (OpenAI via OpenRouter) — outline, sections, revision.
-- **QC Reviewer:** GLM 5.3 Flash (Zhipu AI via OpenRouter) — independent review.
+- **QC Reviewer:** GLM 5.3 Flash (Zhipu AI via OpenRouter) — separate review model.
 
-Using a different model for QC avoids self-review bias: the generator cannot
-quietly approve its own unsupported claims.
+Using a different model for QC reduces self-review bias: the generator is less
+likely to approve its own unsupported claims.
 
 `.env` is gitignored and is never committed. Optional settings (endpoint,
 model, report title) are documented in `.env.example`. The API key is obtained

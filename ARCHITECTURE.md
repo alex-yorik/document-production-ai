@@ -92,7 +92,7 @@ overridden with the `INPUT_DIR` environment variable.
   deterministic numeric check independently flags numeric tokens absent from the
   source chunks. The check is token-based and severity is HIGH.
 - **Single LLM client.** `src/llm_client.py` is a minimal OpenAI-compatible
-  client for DeepSeek with retries, timing logs, JSON-fence stripping, and a
+  client for OpenRouter with retries, timing logs, JSON-fence stripping, and a
   bounded number of attempts. There is no provider abstraction.
 - **Offline tests.** The pipeline is split into stages in `run_pipeline.py`, and
   the test suite replaces the client with a fake and patches module-level paths,

@@ -7,7 +7,7 @@ limitations include:
   rephrased or downgraded in severity; there is no semantic verification of the fix.
 - **Retrieval is a matching-word counter** over chunks, not embeddings-based
   semantic search.
-- **One LLM provider.** The pipeline uses DeepSeek only; there is no provider
+- **One LLM provider.** The pipeline uses OpenRouter only; there is no provider
   fallback.
 - **No authentication or multi-user support.** The Streamlit UI is single-user
   and local.
