@@ -1,4 +1,4 @@
-"""DeepSeek LLM client for chat completions and structured JSON output."""
+"""OpenAI-compatible LLM client (OpenRouter) for chat completions and structured JSON output."""
 
 import json
 import logging
@@ -8,8 +8,8 @@ import time
 import requests
 from dotenv import load_dotenv
 
-DEFAULT_BASE_URL = "https://api.deepseek.com/v1"
-DEFAULT_MODEL_NAME = "deepseek-chat"
+DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
+DEFAULT_MODEL_NAME = "openai/gpt-4o-mini"
 CHAT_ENDPOINT_PATH = "/chat/completions"
 
 # Maximum number of attempts before chat_completion gives up.
@@ -42,19 +42,19 @@ def _strip_json_fences(raw: str) -> str:
     return cleaned.strip()
 
 
-class DeepSeekClient:
-    """Minimal OpenAI-compatible client for the DeepSeek chat API."""
+class LLMClient:
+    """Minimal OpenAI-compatible client for the OpenRouter chat completions API."""
 
     def __init__(self) -> None:
         """Load API credentials and endpoint configuration from the environment."""
         load_dotenv()
-        self.api_key = os.getenv("DEEPSEEK_API_KEY")
-        self.base_url = os.getenv("DEEPSEEK_BASE_URL", DEFAULT_BASE_URL)
-        self.model = os.getenv("MODEL_NAME", DEFAULT_MODEL_NAME)
+        self.api_key = os.getenv("LLM_API_KEY")
+        self.base_url = os.getenv("LLM_BASE_URL", DEFAULT_BASE_URL)
+        self.model = os.getenv("LLM_MODEL", DEFAULT_MODEL_NAME)
         self.endpoint = f"{self.base_url}{CHAT_ENDPOINT_PATH}"
         if not self.api_key:
             raise ValueError(
-                "DEEPSEEK_API_KEY is not set. "
+                "LLM_API_KEY is not set. "
                 "Create a .env file in the project root (see .env.example) or export the variable."
             )
 

@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 from src import ingestion, retrieval
-from src.llm_client import DeepSeekClient
+from src.llm_client import LLMClient
 from src.metrics import count_resolved_issues
 from src.utils import INPUT_DIR, STATE_DIR, load_env, load_json
 
@@ -82,7 +82,7 @@ def _stage_ingest() -> None:
     print(f"Stage 2: Retrieval ready. {len(chunks)} chunks loaded.")
 
 
-def _stage_outline(client: DeepSeekClient) -> dict:
+def _stage_outline(client: LLMClient) -> dict:
     """Stage 3: generate the report outline."""
     logging.info("Stage 3: Outline Generation")
     from src.outline_generator import OutlineGenerator, load_input_files
@@ -100,7 +100,7 @@ def _stage_outline(client: DeepSeekClient) -> dict:
     return outline
 
 
-def _stage_sections(client: DeepSeekClient, outline: dict) -> tuple[dict, list, str]:
+def _stage_sections(client: LLMClient, outline: dict) -> tuple[dict, list, str]:
     """Stage 4: generate all report sections."""
     logging.info("Stage 4: Section Generation")
     from src.section_generator import SectionGenerator
@@ -117,7 +117,7 @@ def _stage_sections(client: DeepSeekClient, outline: dict) -> tuple[dict, list, 
     return sections, all_chunks, methodology_text
 
 
-def _stage_review(client: DeepSeekClient, sections: dict, outline: dict, methodology_text: str) -> tuple[object, dict]:
+def _stage_review(client: LLMClient, sections: dict, outline: dict, methodology_text: str) -> tuple[object, dict]:
     """Stage 5: run the AI quality review."""
     logging.info("Stage 5: AI Quality Review")
     from src.qc_reviewer import QCReviewer
@@ -134,7 +134,7 @@ def _stage_review(client: DeepSeekClient, sections: dict, outline: dict, methodo
 
 
 def _stage_revision(
-    client: DeepSeekClient,
+    client: LLMClient,
     sections: dict,
     outline: dict,
     methodology_text: str,
@@ -209,7 +209,7 @@ def run_full_pipeline() -> dict:
 
     _stage_ingest()
 
-    client = DeepSeekClient()
+    client = LLMClient()
     outline = _stage_outline(client)
     sections, all_chunks, methodology_text = _stage_sections(client, outline)
     qc_reviewer, qc_report = _stage_review(client, sections, outline, methodology_text)

@@ -63,7 +63,7 @@ HIGH_ISSUE = {
 
 
 class FakeClient:
-    """Deterministic stand-in for DeepSeekClient covering every pipeline stage."""
+    """Deterministic stand-in for LLMClient covering every pipeline stage."""
 
     def __init__(self, *, high_issues: bool = True, qc_raises: bool = False) -> None:
         self.high_issues = high_issues
