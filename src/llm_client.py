@@ -1,15 +1,20 @@
-"""OpenAI-compatible LLM client (OpenRouter) for chat completions and structured JSON output."""
+"""OpenRouter LLM client with separate generator and QC model configurations."""
 
 import json
 import logging
 import os
 import time
+from typing import NamedTuple
 
 import requests
 from dotenv import load_dotenv
 
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
-DEFAULT_MODEL_NAME = "openai/gpt-4o-mini"
+DEFAULT_GENERATOR_MODEL = "openai/gpt-4o-mini"
+DEFAULT_QC_MODEL = "z-ai/glm-5.3-flash"
+DEFAULT_MODEL_NAME = DEFAULT_GENERATOR_MODEL
+CONFIG_GENERATOR = "generator"
+CONFIG_QC = "qc"
 CHAT_ENDPOINT_PATH = "/chat/completions"
 
 # Maximum number of attempts before chat_completion gives up.
@@ -20,6 +25,40 @@ RETRY_DELAY_SECONDS = 2.0
 REQUEST_TIMEOUT_SECONDS = 60
 
 logger = logging.getLogger(__name__)
+
+
+class LLMConfig(NamedTuple):
+    """Resolved settings for one LLM role."""
+
+    api_key: str | None
+    base_url: str
+    model: str
+
+
+def _load_config(config: str) -> LLMConfig:
+    """Resolve API key, base URL and model for a named LLM role."""
+    if config == CONFIG_GENERATOR:
+        api_key = os.getenv("GENERATOR_API_KEY") or os.getenv("LLM_API_KEY")
+        base_url = os.getenv("GENERATOR_BASE_URL") or os.getenv("LLM_BASE_URL") or DEFAULT_BASE_URL
+        model = os.getenv("GENERATOR_MODEL") or os.getenv("LLM_MODEL") or DEFAULT_GENERATOR_MODEL
+    elif config == CONFIG_QC:
+        api_key = os.getenv("QC_API_KEY") or os.getenv("LLM_API_KEY")
+        base_url = os.getenv("QC_BASE_URL") or os.getenv("LLM_BASE_URL") or DEFAULT_BASE_URL
+        model = os.getenv("QC_MODEL") or DEFAULT_QC_MODEL
+    else:
+        raise ValueError(f"Unknown LLM config '{config}'. Use '{CONFIG_GENERATOR}' or '{CONFIG_QC}'.")
+    return LLMConfig(api_key=api_key, base_url=base_url, model=model)
+
+
+def _require_api_key(config: str, api_key: str | None) -> str:
+    """Return the API key or raise an actionable configuration error."""
+    if api_key:
+        return api_key
+    prefix = "GENERATOR" if config == CONFIG_GENERATOR else "QC"
+    raise ValueError(
+        f"LLM_API_KEY is not set and {prefix}_API_KEY is not set. "
+        "Create a .env file in the project root (see .env.example) or export the variable."
+    )
 
 
 def format_user_message(text: str) -> dict[str, str]:
@@ -43,20 +82,21 @@ def _strip_json_fences(raw: str) -> str:
 
 
 class LLMClient:
-    """Minimal OpenAI-compatible client for the OpenRouter chat completions API."""
+    """OpenRouter client bound to a generator or QC configuration."""
 
-    def __init__(self) -> None:
-        """Load API credentials and endpoint configuration from the environment."""
+    def __init__(self, config: str = CONFIG_GENERATOR) -> None:
+        """Load the API credentials and endpoint for the requested role.
+
+        Args:
+            config: ``generator`` or ``qc``; selects the matching environment variables.
+        """
         load_dotenv()
-        self.api_key = os.getenv("LLM_API_KEY")
-        self.base_url = os.getenv("LLM_BASE_URL", DEFAULT_BASE_URL)
-        self.model = os.getenv("LLM_MODEL", DEFAULT_MODEL_NAME)
+        settings = _load_config(config)
+        self.config = config
+        self.api_key = _require_api_key(config, settings.api_key)
+        self.base_url = settings.base_url
+        self.model = settings.model
         self.endpoint = f"{self.base_url}{CHAT_ENDPOINT_PATH}"
-        if not self.api_key:
-            raise ValueError(
-                "LLM_API_KEY is not set. "
-                "Create a .env file in the project root (see .env.example) or export the variable."
-            )
 
     def chat_completion(
         self,
@@ -64,6 +104,7 @@ class LLMClient:
         model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2000,
+        config: str | None = None,
     ) -> str:
         """Send a chat completion request with retries and timing logs.
 
@@ -72,6 +113,7 @@ class LLMClient:
             model: Model identifier to use; defaults to the client configuration.
             temperature: Sampling temperature (0.0-2.0).
             max_tokens: Maximum number of tokens to generate.
+            config: Optional role override (``generator`` or ``qc``).
 
         Returns:
             The assistant text response.
@@ -79,7 +121,13 @@ class LLMClient:
         Raises:
             RuntimeError: If all retries are exhausted or the API returns an error.
         """
-        model = model or self.model
+        if config is not None and config != self.config:
+            settings = _load_config(config)
+            api_key = _require_api_key(config, settings.api_key)
+            base_url, default_model = settings.base_url, settings.model
+        else:
+            api_key, base_url, default_model = self.api_key, self.base_url, self.model
+        model = model or default_model
         payload = {
             "model": model,
             "messages": messages,
@@ -88,18 +136,19 @@ class LLMClient:
         }
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {api_key}",
         }
-        return self._send_with_retries(payload, headers)
+        endpoint = f"{base_url}{CHAT_ENDPOINT_PATH}"
+        return self._send_with_retries(payload, headers, endpoint)
 
-    def _send_with_retries(self, payload: dict, headers: dict) -> str:
+    def _send_with_retries(self, payload: dict, headers: dict, endpoint: str | None = None) -> str:
         """POST one chat completion request, retrying transient failures."""
         last_error: Exception | None = None
         for attempt in range(1, MAX_RETRIES + 1):
             started_at = time.monotonic()
             try:
                 response = requests.post(
-                    self.endpoint,
+                    endpoint or self.endpoint,
                     headers=headers,
                     json=payload,
                     timeout=REQUEST_TIMEOUT_SECONDS,
@@ -137,6 +186,7 @@ class LLMClient:
         model: str | None = None,
         temperature: float = 0.0,
         max_tokens: int = 2000,
+        config: str | None = None,
     ) -> dict | list:
         """Request a JSON-only response and parse it.
 
@@ -147,6 +197,7 @@ class LLMClient:
             model: Model identifier to use; defaults to the client configuration.
             temperature: Sampling temperature (0.0-2.0).
             max_tokens: Maximum number of tokens to generate.
+            config: Optional role override (``generator`` or ``qc``).
 
         Returns:
             Parsed JSON object (dict or list).
@@ -166,7 +217,10 @@ class LLMClient:
             ]
         else:
             full_messages = list(messages)
-        raw = self.chat_completion(full_messages, model=model, temperature=temperature, max_tokens=max_tokens)
+        kwargs = {"model": model, "temperature": temperature, "max_tokens": max_tokens}
+        if config is not None:
+            kwargs["config"] = config
+        raw = self.chat_completion(full_messages, **kwargs)
         cleaned = _strip_json_fences(raw)
         try:
             return json.loads(cleaned)

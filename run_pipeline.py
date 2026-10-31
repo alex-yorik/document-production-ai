@@ -24,6 +24,14 @@ REQUIRED_INPUT_FILES = ("company_brief.md", "methodology.md", "market_data.md")
 CHUNKS_PATH = STATE_DIR / "chunks.json"
 
 
+def _create_client(config: str) -> LLMClient:
+    """Create an LLM client for a role, tolerating legacy no-arg test doubles."""
+    try:
+        return LLMClient(config=config)
+    except TypeError:
+        return LLMClient()
+
+
 def setup_logging() -> None:
     """Configure console logging with timestamps."""
     logging.basicConfig(
@@ -209,12 +217,16 @@ def run_full_pipeline() -> dict:
 
     _stage_ingest()
 
-    client = LLMClient()
-    outline = _stage_outline(client)
-    sections, all_chunks, methodology_text = _stage_sections(client, outline)
-    qc_reviewer, qc_report = _stage_review(client, sections, outline, methodology_text)
+    generator_client = _create_client("generator")
+    qc_client = _create_client("qc")
+    logging.info("Generator LLM: %s", getattr(generator_client, "model", "unknown"))
+    logging.info("QC LLM: %s", getattr(qc_client, "model", "unknown"))
+
+    outline = _stage_outline(generator_client)
+    sections, all_chunks, methodology_text = _stage_sections(generator_client, outline)
+    qc_reviewer, qc_report = _stage_review(qc_client, sections, outline, methodology_text)
     sections, qc_report_final = _stage_revision(
-        client, sections, outline, methodology_text, all_chunks, qc_reviewer, qc_report
+        generator_client, sections, outline, methodology_text, all_chunks, qc_reviewer, qc_report
     )
     return _stage_assemble(sections, outline, qc_report, qc_report_final)
 

@@ -1,4 +1,8 @@
-"""AI Quality Reviewer for generated report sections."""
+"""AI Quality Reviewer for generated report sections.
+
+Uses a separate QC LLM (GLM 5.3 Flash) for objective review, so the model
+that generated the text is not the model that checks it.
+"""
 
 import json
 import logging
@@ -88,10 +92,11 @@ Examples:
 
 
 class QCReviewer:
-    """Review generated sections against the outline and methodology."""
+    """Review generated sections with a dedicated QC client."""
 
     def __init__(self, client: LLMClient, all_chunks: list | None = None) -> None:
-        self.client = client
+        """Bind the reviewer to a client configured for the QC role."""
+        self.qc_client = client
         self.all_chunks = all_chunks
 
     def _ensure_chunks(self) -> None:
@@ -190,12 +195,12 @@ Be strict and thorough. Identify ALL issues, even minor ones.
         logger.info("Overall Score: %s/100", review.get("overall_score"))
 
     def _request_review(self, messages: list[dict]) -> dict:
-        """Call the reviewer, retrying once with a larger token budget on failure."""
+        """Call the QC model, retrying once with a larger token budget on failure."""
         try:
-            return self.client.chat_completion_json(messages, temperature=QC_TEMPERATURE, max_tokens=QC_MAX_TOKENS)
+            return self.qc_client.chat_completion_json(messages, temperature=QC_TEMPERATURE, max_tokens=QC_MAX_TOKENS)
         except Exception as exc:  # noqa: BLE001 — retry once on any client failure
             logger.warning("QC review attempt 1 failed (%s); retrying with larger token budget", exc)
-        return self.client.chat_completion_json(messages, temperature=QC_TEMPERATURE, max_tokens=QC_MAX_TOKENS * 2)
+        return self.qc_client.chat_completion_json(messages, temperature=QC_TEMPERATURE, max_tokens=QC_MAX_TOKENS * 2)
 
     def review_sections(self, sections: dict, outline: dict, methodology_text: str) -> dict:
         """Run the QC review and persist the report to the state directory."""
