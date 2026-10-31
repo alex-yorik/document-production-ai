@@ -10,7 +10,7 @@ import src.qc_reviewer as qc_reviewer
 import src.retrieval as retrieval
 import src.revision_loop as revision_loop
 import src.section_generator as section_generator
-from src.llm_client import DeepSeekClient, _strip_json_fences
+from src.llm_client import LLMClient, _strip_json_fences
 from src.qc_reviewer import QCReviewer
 from src.revision_loop import RevisionLoop
 from src.utils import PROJECT_ROOT, STATE_DIR
@@ -91,11 +91,11 @@ def _make_client(
     monkeypatch,
     base_url: str = "https://example.test/v1",
     model: str = "custom-model",
-) -> DeepSeekClient:
-    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-key")
-    monkeypatch.setenv("DEEPSEEK_BASE_URL", base_url)
-    monkeypatch.setenv("MODEL_NAME", model)
-    return DeepSeekClient()
+) -> LLMClient:
+    monkeypatch.setenv("LLM_API_KEY", "test-key")
+    monkeypatch.setenv("LLM_BASE_URL", base_url)
+    monkeypatch.setenv("LLM_MODEL", model)
+    return LLMClient()
 
 
 def test_client_reads_env_after_module_import(monkeypatch):

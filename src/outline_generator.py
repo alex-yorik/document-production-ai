@@ -4,7 +4,7 @@ import json
 import logging
 
 from run_pipeline import REQUIRED_INPUT_FILES
-from src.llm_client import DeepSeekClient, format_system_message, format_user_message
+from src.llm_client import LLMClient, format_system_message, format_user_message
 from src.utils import INPUT_DIR, STATE_DIR, save_json
 
 logger = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ Return ONLY valid JSON in this format:
 class OutlineGenerator:
     """Build a report outline via the LLM client and persist it to project_state."""
 
-    def __init__(self, client: DeepSeekClient) -> None:
+    def __init__(self, client: LLMClient) -> None:
         self.client = client
 
     def _build_messages(

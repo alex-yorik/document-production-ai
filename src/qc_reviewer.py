@@ -4,7 +4,7 @@ import json
 import logging
 import re
 
-from src.llm_client import DeepSeekClient, format_system_message, format_user_message
+from src.llm_client import LLMClient, format_system_message, format_user_message
 from src.utils import STATE_DIR, load_json, save_json
 
 logger = logging.getLogger(__name__)
@@ -90,7 +90,7 @@ Examples:
 class QCReviewer:
     """Review generated sections against the outline and methodology."""
 
-    def __init__(self, client: DeepSeekClient, all_chunks: list | None = None) -> None:
+    def __init__(self, client: LLMClient, all_chunks: list | None = None) -> None:
         self.client = client
         self.all_chunks = all_chunks
 

@@ -30,7 +30,7 @@ st.markdown("Automated document generation with AI Quality Control")
 
 st.warning(
     "Demo. Do not upload real personal or confidential data. Uploaded text is "
-    "sent to an external LLM service (DeepSeek)."
+    "sent to an external LLM service (via OpenRouter)."
 )
 
 if st.session_state.get("error"):

@@ -20,7 +20,7 @@ METRIC_KEYS = {
 
 def test_pipeline_offline(offline_env, fake_client_class, monkeypatch):
     client = fake_client_class(high_issues=True)
-    monkeypatch.setattr(run_pipeline, "DeepSeekClient", lambda: client)
+    monkeypatch.setattr(run_pipeline, "LLMClient", lambda: client)
 
     metrics = run_pipeline.run_full_pipeline()
 
@@ -36,7 +36,7 @@ def test_pipeline_offline(offline_env, fake_client_class, monkeypatch):
 )
 def test_revision_depends_on_high_issues(offline_env, fake_client_class, monkeypatch, high_issues, revision_expected):
     client = fake_client_class(high_issues=high_issues)
-    monkeypatch.setattr(run_pipeline, "DeepSeekClient", lambda: client)
+    monkeypatch.setattr(run_pipeline, "LLMClient", lambda: client)
 
     metrics = run_pipeline.run_full_pipeline()
 
@@ -47,7 +47,7 @@ def test_revision_depends_on_high_issues(offline_env, fake_client_class, monkeyp
 
 def test_qc_exception_is_contained_with_zero_score(offline_env, fake_client_class, monkeypatch, caplog):
     client = fake_client_class(qc_raises=True)
-    monkeypatch.setattr(run_pipeline, "DeepSeekClient", lambda: client)
+    monkeypatch.setattr(run_pipeline, "LLMClient", lambda: client)
 
     with caplog.at_level(logging.WARNING):
         metrics = run_pipeline.run_full_pipeline()

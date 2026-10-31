@@ -72,7 +72,7 @@ src/
 ├── qc_reviewer.py         # severity-scored issue detection
 ├── revision_loop.py       # regenerate sections with HIGH issues
 ├── document_assembler.py  # DOCX + QC report export
-├── llm_client.py          # DeepSeek API client
+├── llm_client.py          # OpenRouter LLM client
 ├── metrics.py             # resolved-issue metrics
 ├── upload_utils.py        # upload validation and safe input handling
 └── utils.py               # paths, env, JSON helpers
@@ -138,7 +138,7 @@ data is used anywhere in this repository.
 ## Tech Stack
 
 - Python 3.12
-- DeepSeek API (LLM)
+- OpenRouter (LLM, `openai/gpt-4o-mini`)
 - python-docx (DOCX assembly)
 - Streamlit (optional web UI)
 - python-dotenv
@@ -174,11 +174,14 @@ The pipeline requires exactly these three input files in the input directory:
 Copy `.env.example` to `.env` and set your API key:
 
 ```bash
-DEEPSEEK_API_KEY=your_api_key_here
+LLM_API_KEY=your_openrouter_api_key_here
+LLM_BASE_URL=https://openrouter.ai/api/v1
+LLM_MODEL=openai/gpt-4o-mini
 ```
 
 `.env` is gitignored and is never committed. Optional settings (endpoint,
-model, report title) are documented in `.env.example`.
+model, report title) are documented in `.env.example`. The API key is obtained
+at [openrouter.ai/keys](https://openrouter.ai/keys).
 
 To check the API key and connectivity manually, run the smoke script:
 
@@ -242,7 +245,7 @@ Actions tab on 2026-10-30).
 - An issue counts as resolved also when it was rephrased or downgraded in
   severity; there is no semantic verification of the fix.
 - Retrieval is a matching-word counter over chunks, not embeddings.
-- One LLM provider (DeepSeek) is used; there is no provider fallback.
+- One LLM provider (OpenRouter) is used; there is no provider fallback.
 - There is no authentication and no multi-user support.
 - Document quality depends on the quality of the supplied sources.
 
@@ -255,8 +258,8 @@ human-in-the-loop review — see [docs/roadmap.md](docs/roadmap.md).
 
 ## Data & Privacy
 
-Document text and fragments of the source documents are sent to the DeepSeek
-API for generation and review. Do not upload personal, confidential, or
+Document text and fragments of the source documents are sent to the OpenRouter
+API (model `openai/gpt-4o-mini`) for generation and review. Do not upload personal, confidential, or
 regulated data. Using real data requires informed consent, a data retention
 policy, and a review of the applicable local legislation. No regulatory
 compliance is claimed.
