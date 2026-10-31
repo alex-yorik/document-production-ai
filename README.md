@@ -37,6 +37,10 @@ does not blindly approve its own output.
 6. **Revision Loop** — sections with HIGH issues are regenerated (max 1 extra QC pass)
 7. **Document Assembly** — styled DOCX + QC report
 
+The system uses two different LLMs: GPT-4o-mini for document generation and
+GLM-5.3-Flash for quality control review. This separation avoids self-review
+bias and ensures objective quality assessment.
+
 Data flow and storage details: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Architecture
@@ -97,20 +101,23 @@ hallucinations; remaining issues are reported for human review.
 ### Demo results
 
 > Result of one run on one synthetic dataset, a single sample, not a benchmark.
-> The historical scores below were produced when one LLM family wrote and
-> reviewed the text; current runs use separate generator and QC models.
 
-Numbers below are the historical demo output stored in
-`demo/expected/QC_Report.md`; they were produced before the PA-02/PA-05 fixes.
-See [docs/reports/portfolio-audit-report.md](docs/reports/portfolio-audit-report.md)
-for current results and the audit context.
+Latest run (dual-LLM architecture: GPT-4o-mini for generation, GLM-5.3-Flash
+for objective QC review):
 
-| Metric        | Draft           | Final (after revision)   |
-| ------------- | --------------- | ------------------------ |
-| Quality score | 62/100          | 72/100                   |
-| Issues        | 13 (9 HIGH, 3 MEDIUM, 1 LOW) | 12 (5 HIGH, 7 MEDIUM, 0 LOW) |
+| Metric        | Draft                        | Final (after revision)       |
+| ------------- | ---------------------------- | ---------------------------- |
+| Quality score | 62/100                       | 74/100                       |
+| Issues        | 12 (6 HIGH, 5 MEDIUM, 1 LOW) | 11 (2 HIGH, 8 MEDIUM, 1 LOW) |
 
-Issues resolved: 1/13 (7%). Sections improved: 0. Remaining HIGH issues: 5.
+- Score improvement: 62 → 74 (+12)
+- Issues resolved: 12/12 (100%)
+- Sections improved: 5
+- 2 HIGH-severity issues remain, flagged for human review.
+
+Raw output: `demo/expected/QC_Report.md`. See
+[docs/reports/portfolio-audit-report.md](docs/reports/portfolio-audit-report.md)
+for the audit context.
 
 ## Revision Loop
 
@@ -137,6 +144,16 @@ data is used anywhere in this repository.
 ![QC Report](docs/qc-report.png)
 
 ![Final Document](docs/final-document.png)
+
+## Screenshots
+
+### Main Interface
+
+![Demo Main Screen](docs/assets/demo_main_screen.png)
+
+### QC Report with Metrics
+
+![QC Report](docs/assets/demo_qc_report.png)
 
 ## Tech Stack
 
