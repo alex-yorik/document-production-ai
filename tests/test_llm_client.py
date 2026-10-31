@@ -55,6 +55,16 @@ def test_init_requires_api_key(monkeypatch):
         llm_client.LLMClient()
 
 
+def test_init_rejects_non_ascii_api_key(monkeypatch):
+    monkeypatch.setattr(llm_client, "load_dotenv", lambda *args, **kwargs: None)
+    monkeypatch.delenv("GENERATOR_API_KEY", raising=False)
+    monkeypatch.delenv("QC_API_KEY", raising=False)
+    monkeypatch.setenv("LLM_API_KEY", "sk-or-твой_ключ")
+
+    with pytest.raises(ValueError, match="non-ASCII"):
+        llm_client.LLMClient()
+
+
 def test_chat_completion_success(monkeypatch):
     client = _make_client(monkeypatch)
     captured = {}

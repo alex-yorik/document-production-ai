@@ -52,9 +52,15 @@ def _load_config(config: str) -> LLMConfig:
 
 def _require_api_key(config: str, api_key: str | None) -> str:
     """Return the API key or raise an actionable configuration error."""
-    if api_key:
-        return api_key
     prefix = "GENERATOR" if config == CONFIG_GENERATOR else "QC"
+    if api_key:
+        if not api_key.isascii():
+            raise ValueError(
+                f"{prefix}_API_KEY contains non-ASCII characters (e.g. Cyrillic), "
+                "which cannot be sent in an HTTP Authorization header. "
+                "Use the raw ASCII API key from the provider, not a placeholder."
+            )
+        return api_key
     raise ValueError(
         f"LLM_API_KEY is not set and {prefix}_API_KEY is not set. "
         "Create a .env file in the project root (see .env.example) or export the variable."
