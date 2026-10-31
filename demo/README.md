@@ -23,6 +23,9 @@ The pipeline reads documents from `demo/input/` (instead of the default
 `input/`) and writes results to `output/Final_Report.docx` and
 `output/QC_Report.md`.
 
+The default `input/` is a separate synthetic sample (EdTech in Southeast Asia,
+Russian-language brief); all companies and figures there are fictional too.
+
 `demo/expected/` shows what a real run produced on this dataset, so you can
 compare your own result with a historical baseline.
 

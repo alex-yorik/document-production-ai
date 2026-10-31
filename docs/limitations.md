@@ -15,5 +15,6 @@ limitations include:
   supplied sources; the pipeline cannot compensate for missing or unreliable input.
 - **Single demo sample.** The stored demo results are one run on one synthetic
   dataset, not a benchmark.
+- `input/`: synthetic Russian-language brief (EdTech SEA); all entities fictional.
 - **No compliance claim.** Using real data requires consent, a retention policy,
   and a review of local legislation; no regulatory compliance is claimed.

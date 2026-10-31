@@ -139,6 +139,9 @@ human review, not hidden.
 plus `demo/expected/` with the outputs of a real pipeline run. No real client
 data is used anywhere in this repository.
 
+`input/` is a second sample dataset (EdTech in Southeast Asia, Russian-language
+brief). All companies and figures are fictional; none are real.
+
 ![Pipeline](docs/pipeline.png)
 
 ![QC Report](docs/qc-report.png)
