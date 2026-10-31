@@ -18,9 +18,8 @@ from pathlib import Path
 from src import ingestion, retrieval
 from src.llm_client import LLMClient
 from src.metrics import count_resolved_issues
-from src.utils import INPUT_DIR, STATE_DIR, load_env, load_json
+from src.utils import INPUT_DIR, REQUIRED_INPUT_FILES, STATE_DIR, load_env, load_json
 
-REQUIRED_INPUT_FILES = ("company_brief.md", "methodology.md", "market_data.md")
 CHUNKS_PATH = STATE_DIR / "chunks.json"
 
 

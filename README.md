@@ -188,9 +188,10 @@ For tests and linting, install the dev requirements instead:
 pip install -r requirements-dev.txt
 ```
 
-The pipeline requires exactly these three input files in the input directory:
+The pipeline requires these three input files in the input directory:
 `company_brief.md`, `market_data.md`, and `methodology.md`. The default
-`input/` directory and `demo/input/` both contain them.
+`input/` directory and `demo/input/` both contain them. Additional `.md`/`.txt`
+files are optional: they are ingested and used for retrieval only.
 
 ## Configuration
 
@@ -254,7 +255,9 @@ derived from the repository root.
 streamlit run app.py
 ```
 
-- upload source documents through the browser
+- upload 3–5 source documents through the browser; all three required files
+  (`company_brief.md`, `market_data.md`, `methodology.md`) must be included, and
+  up to two extra `.md`/`.txt` files are used for retrieval only
 - before/after metrics (draft score, final score, resolved issues) in the interface
 - download `Final_Report.docx` and `QC_Report.md` with one button
 

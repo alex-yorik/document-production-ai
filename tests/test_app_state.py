@@ -92,6 +92,19 @@ def test_successful_generation_switches_to_results(monkeypatch, uploaded_files, 
     assert any("Document generated successfully!" in success.value for success in at.success)
 
 
+def test_qc_report_preview_escapes_dollar_signs(monkeypatch, uploaded_files, tmp_path):
+    output = _metrics()
+    monkeypatch.setattr(run_pipeline, "run_full_pipeline", lambda: output)
+    (tmp_path / "QC_Report.md").write_text("Revenue: $3.1B, forecast $2.0B", encoding="utf-8")
+    at = _run_app(monkeypatch, tmp_path)
+
+    at.button(key="generate_button").click().run()
+
+    assert not at.exception
+    previews = [element.value for element in at.markdown]
+    assert any("\\$3.1B" in value and "\\$2.0B" in value for value in previews)
+
+
 def test_reset_button_clears_generation_state(monkeypatch, uploaded_files, tmp_path):
     output = _metrics()
     monkeypatch.setattr(run_pipeline, "run_full_pipeline", lambda: output)
