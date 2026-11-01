@@ -481,8 +481,8 @@ K2/K7.
 | K4 | VERIFIED | `c5daa9c` | `escape_dollars` добавлен, контракт файлов согласован |
 | K5 | NOT VERIFIED | — | опционально, не выполнялось |
 | K6 | VERIFIED | `8699138` | числа тестов обновлены до фактических |
-| K7 | IN PROGRESS | этот коммит | гигиена отчёта и CHANGELOG |
-| K8 | NOT VERIFIED | — | не выполнялось |
+| K7 | VERIFIED | `23f7a76` | гигиена отчёта и CHANGELOG |
+| K8 | VERIFIED (offline) / NOT VERIFIED (live CI) | этот коммит | финальные проверки, PR открыт |
 
 ## K1. Согласование демо-цифр
 
@@ -631,10 +631,19 @@ $ grep -nE "DEEPSEEK_API_KE[Y]" docs/reports/portfolio-audit-report.md
   `2c9bce5` (это коммит исправления latin-1). Hash K7 не может ссылаться сам
   на себя, поэтому указан как «этот коммит».
 
-## K8. Финальная проверка
+## K8: Final Verification
 
-- Коммит: —.
-- Статус: **NOT VERIFIED** — не выполнялась.
-- Ключевые команды и сырой вывод: не применимо.
-- Изменённые файлы: —.
-- Отклонения от ТЗ: нет.
+**Status:** VERIFIED (offline tests), NOT VERIFIED (live CI)
+
+**Commands:**
+- `python3 -m pytest -m "not live" -q` → 135 passed
+- `python3 -m compileall -q` → OK
+- `ruff check .` / `ruff format --check .` → All checks passed
+- `bandit -r src run_pipeline.py app.py -ll -q` → no issues
+- `python3 scripts/check_modularity.py` → OK
+
+**PR:** chore/publication-fixes → main (opened, not merged)
+
+**NOT VERIFIED:**
+- Live CI checks (validate, modularity, security) — owner to verify after PR open
+- K5 skipped (optional, D4)
