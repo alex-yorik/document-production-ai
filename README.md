@@ -106,13 +106,13 @@ hallucinations; remaining issues are reported for human review.
 
 | Metric | Value |
 |--------|-------|
-| Draft Quality Score | 58/100 |
-| Final Quality Score | 62/100 |
-| Score Improvement | +4 |
-| Draft Issues | 18 (HIGH: 12, MEDIUM: 5, LOW: 1) |
-| Final Issues | 17 (HIGH: 11, MEDIUM: 5, LOW: 1) |
-| Draft Issues No Longer Reported | 18/18 (100%) |
-| Sections Improved | 5 |
+| Draft Quality Score | 62/100 |
+| Final Quality Score | 78/100 |
+| Score Improvement | +16 |
+| Draft Issues | 12 (HIGH: 7, MEDIUM: 4, LOW: 1) |
+| Final Issues | 10 (HIGH: 0, MEDIUM: 10, LOW: 0) |
+| Draft Issues No Longer Reported | 12/12 (100%) |
+| Sections Improved | 4 |
 
 *One run, one synthetic dataset, not a benchmark.*
 
