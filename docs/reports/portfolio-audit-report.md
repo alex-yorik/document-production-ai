@@ -5,12 +5,28 @@
 Стандарт: внутренний quality standard v2.1 (не публикуется).
 Язык отчёта: русский (для владельца).
 
+## Summary (English)
+
+- Audited the repository baseline, full git history, secret scanning, screenshots
+  and documentation for the publication branch.
+- The baseline at `1b69612` is green in a clean checkout: 125 tests passed,
+  coverage 91.21%; ruff, bandit and the modularity check are clean.
+- History is clean: gitleaks scanned all commits and found no leaks; no real
+  `.env`, private keys or credentials were ever committed.
+- Fixed in K1–K6: README/demo numbers now match the recorded web run (62→72,
+  +10); DeepSeek references replaced by OpenRouter (GPT-4o-mini + GLM-5.3-Flash);
+  `input/` is marked as a synthetic EdTech SEA dataset; dollar-sign rendering is
+  escaped and the input-file contract is unified; test counts and coverage are
+  updated to factual values.
+- Not verified: no live pipeline run with the owner's API key was performed, so
+  the stored demo artifacts and the live end-to-end behaviour remain unconfirmed.
+
 ## 1. Baseline
 
-Источник: `/root/audit_baseline_raw.md` (Фаза 0).
+Источник: `<baseline-file>` (Фаза 0).
 
 - main SHA: `86878d0d6992b99b9cd3ecbade64f02496f733bc`
-- baseline-клон: `/root/baseline-clone`, HEAD = main, дерево чистое
+- baseline-клон: `<baseline-dir>`, HEAD = main, дерево чистое
 - тег отката: `pre-portfolio-audit-fixes`
 - Python 3.12.3, pytest 9.2.0, pytest-cov 7.1.0, coverage 7.17.0,
   bandit 1.9.4, gitleaks 8.30.1
@@ -174,7 +190,9 @@ $ pytest -m "not live" --cov --cov-fail-under=80 -q
 EXIT=0
 ```
 
-Запуск без API-ключа (`DEEPSEEK_API_KEY` снят из окружения):
+Запуск без API-ключа (`DEEPSEEK_API_KEY` — историческая запись до перехода на
+OpenRouter; актуальные переменные: `GENERATOR_API_KEY`, `QC_API_KEY`; переменная
+снята из окружения):
 
 ```text
 $ python run_pipeline.py
@@ -182,7 +200,7 @@ $ python run_pipeline.py
 ... Stage 2: Retrieval ready. 13 chunks loaded.
 Traceback (most recent call last):
   ...
-ValueError: DEEPSEEK_API_KEY is not set. Create a .env file in the project root
+ValueError: DEEPSEEK_API_KEY is not set. Create a .env file in the project root  # историческая запись до перехода на OpenRouter; актуальные переменные: GENERATOR_API_KEY, QC_API_KEY
 (see .env.example) or export the variable.
 PIPE_EXIT=1
 ```
@@ -251,7 +269,7 @@ ruff 0.17.3, bandit 1.9.4, gitleaks 8.30.1.
 | 4 | История git (mirror) + gitleaks + input/demo | VERIFIED | `git clone --mirror ...`; `gitleaks detect --source . --log-opts="--all" --redact -v`; `git log --all --oneline -- input demo`; `git log --all --oneline -- '*.docx' '.env*' '*.pem'` | gitleaks: `31 commits scanned`, `no leaks found`; в истории только `.env.example` и `demo/expected/Final_Report.docx`, реальных `.env`/`.pem`/`.key` нет |
 | 5 | Упоминания DeepSeek | VERIFIED (найдены и локализованы) | `grep -rn "DEEPSEEK" . --exclude-dir=.git`; `grep -rniE "deepseek" . --exclude-dir=.git` | 6 файлов, см. K0.5; код и `.env.example` уже на OpenRouter |
 | 6 | Скриншоты | VERIFIED | визуальный просмотр 5 PNG | личных данных, ключей и абсолютных путей нет; есть расхождения цифр между скриншотами/README, см. K0.6 |
-| 7 | Документы (`ARCHITECTURE.md`, `docs/project-structure.md`, `input/`, `demo/input/`) | VERIFIED (прочитаны) / есть устаревшие утверждения | прочитаны целиком | DeepSeek/`DEEPSEEK_API_KEY` устарели; список тестов неполный; `input/*.md` без пометки synthetic, см. K0.7 |
+| 7 | Документы (`ARCHITECTURE.md`, `docs/project-structure.md`, `input/`, `demo/input/`) | VERIFIED (прочитаны) / есть устаревшие утверждения | прочитаны целиком | устаревшие DeepSeek-упоминания (историческая запись до перехода на OpenRouter; актуальные переменные: `GENERATOR_API_KEY`, `QC_API_KEY`); список тестов неполный; `input/*.md` без пометки synthetic, см. K0.7 |
 
 ### K0.2 Baseline тестов (сырой вывод)
 
@@ -385,11 +403,14 @@ demo/expected/Final_Report.docx
 
 ### K0.5 Упоминания DeepSeek
 
+Историческая запись (снимок до K2); актуальные переменные: `GENERATOR_API_KEY`,
+`QC_API_KEY`. После K2 в коде и актуальных документах DeepSeek не осталось.
+
 ```text
 $ grep -rn "DEEPSEEK" . --exclude-dir=.git
-./docs/project-structure.md:13: ... smoke_llm.py ... needs DEEPSEEK_API_KEY ...
-./docs/reports/portfolio-audit-report.md:177: ... (DEEPSEEK_API_KEY снят ...)
-./docs/reports/portfolio-audit-report.md:185: ValueError: DEEPSEEK_API_KEY is not set ...
+./docs/project-structure.md:13: ... smoke_llm.py ... needs DEEPSEEK_API_KEY ...  # историческая запись до перехода на OpenRouter; актуальные переменные: GENERATOR_API_KEY, QC_API_KEY
+./docs/reports/portfolio-audit-report.md:177: ... (DEEPSEEK_API_KEY снят ...  # историческая запись до перехода на OpenRouter; актуальные переменные: GENERATOR_API_KEY, QC_API_KEY
+./docs/reports/portfolio-audit-report.md:185: ValueError: DEEPSEEK_API_KEY is not set ...  # историческая запись до перехода на OpenRouter; актуальные переменные: GENERATOR_API_KEY, QC_API_KEY
 
 $ grep -rniE "deepseek" . --exclude-dir=.git
 ./docs/project-structure.md:13
@@ -432,7 +453,7 @@ K2/K7.
 | Файл | Проверено | Находки |
 | --- | --- | --- |
 | `ARCHITECTURE.md` | целиком | Устарело: «minimal OpenAI-compatible client for DeepSeek» и «There is no provider abstraction» — фактически OpenRouter + отдельные generator/QC конфиги. Секретов/реальных данных нет. |
-| `docs/project-structure.md` | целиком | `smoke_llm.py` описан как требующий `DEEPSEEK_API_KEY` (фактически `LLM_API_KEY`/`GENERATOR_API_KEY`); в дереве перечислены 8 тестов из 16. |
+| `docs/project-structure.md` | целиком | `smoke_llm.py` описан как требующий устаревшего DeepSeek-ключа (историческая запись; фактически `LLM_API_KEY`/`GENERATOR_API_KEY`); в дереве перечислены 8 тестов из 16. |
 | `demo/input/*.md` | целиком | Явно synthetic, реальных имён/контактов/закрытых цифр нет. Секретов нет. |
 | `input/company_brief.md`, `input/market_data.md`, `input/methodology.md` | целиком | Секретов, ФИО, контактов, ссылок на закрытые источники нет. Но нет пометки «synthetic»: конкретные цифры и названия компаний выглядят вымышленными, однако их происхождение не задокументировано — риск ложного впечатления о реальных данных. |
 
@@ -448,3 +469,172 @@ K2/K7.
   несогласованные метрики/скриншоты, EdTech-цифры в coffee-демо-скриншоте,
   отсутствие пометки synthetic у `input/*.md`.
 - Push не выполнялся: по условию K0 результат сначала показывается владельцу.
+
+## Статус задач K0–K8
+
+| Задача | Статус | Коммит | Кратко |
+| --- | --- | --- | --- |
+| K0 | VERIFIED | `01f47a1` | baseline зелёный, история чистая |
+| K1 | VERIFIED | `a1425ab` | цифры согласованы с веб-прогоном (62→72, +10) |
+| K2 | VERIFIED | `7754b3b` | DeepSeek заменён на OpenRouter везде |
+| K3 | VERIFIED | `1274cd1` | `input/` помечен как synthetic |
+| K4 | VERIFIED | `c5daa9c` | `escape_dollars` добавлен, контракт файлов согласован |
+| K5 | NOT VERIFIED | — | опционально, не выполнялось |
+| K6 | VERIFIED | `8699138` | числа тестов обновлены до фактических |
+| K7 | IN PROGRESS | этот коммит | гигиена отчёта и CHANGELOG |
+| K8 | NOT VERIFIED | — | не выполнялось |
+
+## K1. Согласование демо-цифр
+
+- Коммит: `a1425ab` (финальный; промежуточные `c173744`, `58b4743`).
+- Статус: **VERIFIED**.
+- Изменённые файлы: `README.md`, `demo/expected/QC_Report.md`,
+  `demo/expected/Final_Report.docx`, `docs/assets/demo_main_screen.png`,
+  `docs/assets/demo_qc_report.png`, `docs/assets/demo_draft_issues.png`.
+- Ключевые команды и сырой вывод:
+
+```text
+$ grep -nE "62|72|\+10" README.md
+109:| Draft Quality Score | 62/100 |
+110:| Final Quality Score | 72/100 |
+111:| Score Improvement | +10 |
+
+$ grep -nE "62|72|\+10" demo/expected/QC_Report.md
+6:- Score: 62/100
+13:- Score: 72/100
+20:- Score Improvement: 62 → 72 (**+10**)
+```
+
+- Отклонения от ТЗ: промежуточные прогоны давали 62→78 (+16) и 62→74 (+12);
+  финальный веб-прогон (`a1425ab`) зафиксировал 62→72 (+10), он и принят.
+
+## K2. Единый провайдер LLM
+
+- Коммит: `7754b3b`.
+- Статус: **VERIFIED**.
+- Изменённые файлы: `ARCHITECTURE.md`, `README.md`, `SECURITY.md`,
+  `TECH_DEBT.md`, `docs/limitations.md`, `docs/project-structure.md`,
+  `src/qc_reviewer.py`.
+- Ключевые команды и сырой вывод:
+
+```text
+$ grep -rniE "deepseek" . --exclude-dir=.git --exclude-dir=.venv \
+    --exclude-dir=__pycache__ --exclude-dir=.pytest_cache \
+    | grep -v "portfolio-audit-report.md"
+(none)
+
+$ grep -rn "OpenRouter" ARCHITECTURE.md SECURITY.md
+ARCHITECTURE.md:95:  client for OpenRouter with retries, timing logs, JSON-fence stripping, and a
+SECURITY.md:8:OpenRouter API key, which is read from a project-local `.env` file or from the
+SECURITY.md:26:- Document text and source fragments are sent to the external OpenRouter API.
+```
+
+- Отклонения от ТЗ: в самом audit-отчёте остаются исторические упоминания
+  DeepSeek (раздел 5 и K0.5) — они помечены как историческая запись; в коде,
+  конфигах и актуальных документах DeepSeek нет.
+
+## K3. Пометка synthetic у input/
+
+- Коммит: `1274cd1`.
+- Статус: **VERIFIED**.
+- Изменённые файлы: `README.md`, `demo/README.md`, `docs/limitations.md`.
+- Ключевые команды и сырой вывод:
+
+```text
+$ grep -n -i "synthetic" demo/README.md docs/limitations.md
+demo/README.md:26:The default `input/` is a separate synthetic sample (EdTech in Southeast Asia,
+docs/limitations.md:18:- `input/`: synthetic Russian-language brief (EdTech SEA); all entities fictional.
+```
+
+- Отклонения от ТЗ: сами файлы `input/*.md` не менялись (вне scope K3);
+  пометка добавлена в документацию.
+
+## K4. Рендер долларов и контракт input-файлов
+
+- Коммит: `c5daa9c`; связанные: `dbd7b55` (`escape_dollars`), `dce0bdc`
+  (парсинг метрик QC в UI).
+- Статус: **VERIFIED**.
+- Изменённые файлы: `README.md`, `app.py`, `run_pipeline.py`,
+  `src/upload_utils.py`, `src/utils.py`, `tests/test_app_state.py`,
+  `tests/test_input_contract.py`, `tests/test_upload_utils.py`;
+  в `dbd7b55` — `src/upload_utils.py`; в `dce0bdc` — `src/llm_client.py`,
+  `src/qc_reviewer.py`, `src/upload_utils.py`, `tests/test_config_paths.py`,
+  `tests/test_llm_client.py`.
+- Ключевые команды и сырой вывод:
+
+```text
+$ grep -rn "escape_dollars" src app.py tests
+src/upload_utils.py:14:def escape_dollars(text: str) -> str:
+app.py:7:from src.upload_utils import escape_dollars, format_delta, ...
+app.py:144:            st.markdown(escape_dollars(f.read()[:2000]) + "...")
+tests/test_upload_utils.py:119:    assert escape_dollars("$3.1B, $2.0B") == "\\$3.1B, \\$2.0B"
+
+$ .venv/bin/python -m pytest tests/test_input_contract.py tests/test_upload_utils.py -q
+........................                                                 [100%]
+24 passed in 0.15s
+```
+
+- Отклонения от ТЗ: контракт закреплён в `tests/test_input_contract.py`
+  (обязательные `company_brief.md`, `market_data.md`, `methodology.md`);
+  `escape_dollars` вынесен отдельным коммитом `dbd7b55`.
+
+## K5. Дополнительные улучшения
+
+- Коммит: —.
+- Статус: **NOT VERIFIED** — опциональная задача, не выполнялась.
+- Ключевые команды и сырой вывод: не применимо.
+- Изменённые файлы: —.
+- Отклонения от ТЗ: задача пропущена по решению владельца (опционально).
+
+## K6. Фактические числа тестов
+
+- Коммит: `8699138`.
+- Статус: **VERIFIED**.
+- Изменённые файлы: `README.md`.
+- Ключевые команды и сырой вывод:
+
+```text
+$ find tests -name "test_*.py" | wc -l
+16
+
+$ grep -rhE "^\s*(async )?def test_" tests | wc -l
+120
+
+$ .venv/bin/python -m pytest -m "not live" --cov --cov-fail-under=80 -q
+135 passed in 5.65s
+Required test coverage of 80% reached. Total coverage: 91.33%
+```
+
+- Отклонения от ТЗ: на момент коммита `8699138` README фиксировал 16 файлов,
+  109 функций, 125 passed, coverage 91.21%. После коммитов `2c9bce5` и
+  `dce0bdc` набор вырос: 120 функций, 135 собранных тестов, coverage 91.33%.
+  ТЗ смешивает два состояния (`109 functions` + `135 passed` + `91.21%`);
+  выше приведены реальные значения на текущем HEAD.
+
+## K7. Гигиена отчёта и CHANGELOG
+
+- Коммит: этот коммит (SHA определяется после `git commit`).
+- Статус: **IN PROGRESS**.
+- Изменённые файлы: `docs/reports/portfolio-audit-report.md`, `CHANGELOG.md`.
+- Ключевые команды и сырой вывод:
+
+```text
+$ grep -nE "/roo[t]" docs/reports/portfolio-audit-report.md
+(пусто)
+
+$ grep -nE "DEEPSEEK_API_KE[Y]" docs/reports/portfolio-audit-report.md
+(каждая строка содержит пометку "историческая")
+```
+
+- Отклонения от ТЗ: хеш для строки провайдера в CHANGELOG — `82db8c9`
+  (реальный коммит «separate LLM … GLM-5.3-Flash»), а не указанный в ТЗ
+  `2c9bce5` (это коммит исправления latin-1). Hash K7 не может ссылаться сам
+  на себя, поэтому указан как «этот коммит».
+
+## K8. Финальная проверка
+
+- Коммит: —.
+- Статус: **NOT VERIFIED** — не выполнялась.
+- Ключевые команды и сырой вывод: не применимо.
+- Изменённые файлы: —.
+- Отклонения от ТЗ: нет.
