@@ -28,9 +28,9 @@ Discovery date for open items: 2026-10-29.
 
 ## Closed
 
-- **2026-10-31 — `demo/expected/` rebuilt.** The stored outputs now reflect the
-  current pipeline. Rebuilt with dual-LLM architecture (GPT-4o-mini +
-  GLM-5.3-Flash).
+- **2026-10-31 — `demo/expected/` rebuilt.** The stored outputs reflect the
+  pipeline at that time. Rebuilt with dual-LLM architecture (GPT-4o-mini +
+  GLM-5.3-Flash); the generator has since been switched to DeepSeek V4 Flash.
 - **2026-10-29 — obsolete image-todo note.** The `docs` image-todo markdown file
   was removed with `git rm`; the pending idea (an optional architecture image) is
   not blocking publication.

@@ -16,6 +16,7 @@ types.
 
 ### Changed
 
+- Switch generator from GPT-4o-mini to DeepSeek V4 Flash for cost efficiency [53f7202]
 - `feat` — switch LLM provider from DeepSeek to OpenRouter (GPT-4o-mini + GLM-5.3-Flash) (`82db8c9`)
 - `feat` — add iterative revision loop with convergence control (`ed953e6`)
 

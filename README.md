@@ -104,6 +104,8 @@ hallucinations; remaining issues are reported for human review.
 **Models (demo run, pre-switch):** GPT-4o-mini (generator), GLM-5.3-Flash (QC)  
 **Date:** 2026-11-01 | **Commit:** dce0bdc
 
+*Demo run performed on GPT-4o-mini; the current generator is DeepSeek V4 Flash (cost-effective alternative).*
+
 | Metric | Value |
 |--------|-------|
 | Draft Quality Score | 62/100 |

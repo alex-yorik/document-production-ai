@@ -30,5 +30,6 @@ Russian-language brief); all companies and figures there are fictional too.
 compare your own result with a historical baseline.
 
 **Last updated:** 2026-10-31 | **Commit:** 2c9bce5  
-**Models:** GPT-4o-mini (generator), GLM-5.3-Flash (QC)  
+**Models (demo run, pre-switch):** GPT-4o-mini (generator), GLM-5.3-Flash (QC)  
+**Current generator:** DeepSeek V4 Flash (cost-effective alternative)  
 **Dataset:** Northwind (English), synthetic
