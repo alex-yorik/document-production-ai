@@ -1,14 +1,19 @@
 """Pure helpers for handling files uploaded through the Streamlit UI."""
 
+import re
 from pathlib import Path
 
-from src.utils import INPUT_DIR, PROJECT_ROOT
+from src.utils import INPUT_DIR, PROJECT_ROOT, REQUIRED_INPUT_FILES
 
 ALLOWED_EXTENSIONS = {".md", ".txt"}
-MIN_UPLOAD_FILES = 2
+MIN_UPLOAD_FILES = len(REQUIRED_INPUT_FILES)
 MAX_UPLOAD_FILES = 5
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
-REQUIRED_UPLOAD_FILE = "methodology.md"
+
+
+def escape_dollars(text: str) -> str:
+    """Escape dollar signs so Streamlit Markdown does not treat them as formulas."""
+    return re.sub(r"(?<!\\)\$", lambda _: "\\$", text)
 
 
 def validate_uploads(uploaded_files) -> str | None:
@@ -16,7 +21,7 @@ def validate_uploads(uploaded_files) -> str | None:
 
     Returns an error message, or None if the uploads are valid.
     """
-    if not uploaded_files or not (MIN_UPLOAD_FILES <= len(uploaded_files) <= MAX_UPLOAD_FILES):
+    if not uploaded_files or len(uploaded_files) > MAX_UPLOAD_FILES:
         return f"Upload {MIN_UPLOAD_FILES} to {MAX_UPLOAD_FILES} files (.md or .txt)."
 
     total_bytes = sum(len(f.getvalue()) for f in uploaded_files)
@@ -25,10 +30,12 @@ def validate_uploads(uploaded_files) -> str | None:
         return f"Total upload size is {total_mb:.1f} MB — the limit is 10 MB. Remove a file or reduce its size."
 
     names = {Path(f.name).name for f in uploaded_files}
-    if REQUIRED_UPLOAD_FILE not in names:
+    missing = [name for name in REQUIRED_INPUT_FILES if name not in names]
+    if missing:
         return (
-            f"Missing required file: {REQUIRED_UPLOAD_FILE}. "
-            "Include methodology.md among the uploaded files. "
+            f"Missing required file(s): {', '.join(missing)}. "
+            f"The pipeline needs all three: {', '.join(REQUIRED_INPUT_FILES)}. "
+            "Optional extra .md/.txt files are used for retrieval only. "
             "See demo/input/ for examples."
         )
 

@@ -4,8 +4,8 @@ from pathlib import Path
 
 import streamlit as st
 
-from src.upload_utils import format_delta, save_uploaded_files, validate_uploads
-from src.utils import OUTPUT_DIR
+from src.upload_utils import escape_dollars, format_delta, save_uploaded_files, validate_uploads
+from src.utils import OUTPUT_DIR, REQUIRED_INPUT_FILES
 
 # Initialize session state
 if "generation_complete" not in st.session_state:
@@ -52,10 +52,11 @@ with st.sidebar:
 
 # Screen 1: File upload
 st.subheader("Upload Source Documents")
+
+_required_names = ", ".join(f"`{name}`" for name in REQUIRED_INPUT_FILES)
 st.markdown(
-    "Upload 2-5 files. `methodology.md` is required; `company_brief.md` and "
-    "`market_data.md` are used by the demo (optional extras are used for "
-    "retrieval only)."
+    f"Upload 3-5 files. All three required files must be included: {_required_names}. "
+    "Up to two optional `.md`/`.txt` files are used for retrieval only."
 )
 
 uploaded_files = st.file_uploader("Choose files", type=["md", "txt"], accept_multiple_files=True, key="file_uploader")
@@ -64,7 +65,7 @@ st.warning("Generating a report replaces all files currently stored in input/.")
 
 project_name = st.text_input("Project name (optional)", os.getenv("REPORT_TITLE", ""), key="project_name")
 
-st.caption("Required file name: `methodology.md`.")
+st.caption(f"Required files: {', '.join(f'`{name}`' for name in REQUIRED_INPUT_FILES)}.")
 
 
 # Results screen (shown again after the page re-runs)
@@ -83,7 +84,7 @@ def _show_metrics(output):
 
     with col3:
         st.metric(
-            label="Issues Resolved",
+            label="Draft Issues No Longer Reported",
             value=f"{output['resolved_issues']}/{output['draft_issues']}",
             delta=f"{output['resolution_rate']}%",
         )
@@ -140,7 +141,7 @@ def _show_downloads():
     st.subheader("QC Report Preview")
     if qc_path.exists():
         with open(qc_path, encoding="utf-8") as f:
-            st.markdown(f.read()[:2000] + "...")
+            st.markdown(escape_dollars(f.read()[:2000]) + "...")
 
 
 def show_results_page(output):

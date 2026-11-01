@@ -7,7 +7,7 @@ limitations include:
   rephrased or downgraded in severity; there is no semantic verification of the fix.
 - **Retrieval is a matching-word counter** over chunks, not embeddings-based
   semantic search.
-- **One LLM provider.** The pipeline uses DeepSeek only; there is no provider
+- **One LLM provider.** The pipeline uses OpenRouter only; there is no provider
   fallback.
 - **No authentication or multi-user support.** The Streamlit UI is single-user
   and local.
@@ -15,5 +15,6 @@ limitations include:
   supplied sources; the pipeline cannot compensate for missing or unreliable input.
 - **Single demo sample.** The stored demo results are one run on one synthetic
   dataset, not a benchmark.
+- `input/`: synthetic Russian-language brief (EdTech SEA); all entities fictional.
 - **No compliance claim.** Using real data requires consent, a retention policy,
   and a review of local legislation; no regulatory compliance is claimed.

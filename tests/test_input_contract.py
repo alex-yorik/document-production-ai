@@ -4,6 +4,40 @@ import pytest
 
 from run_pipeline import REQUIRED_INPUT_FILES, validate_input_dir
 from src import outline_generator
+from src.upload_utils import validate_uploads
+
+
+class FakeUpload:
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    def getvalue(self) -> bytes:
+        return b"# source document\n"
+
+
+def test_validate_uploads_rejects_two_files_without_company_brief():
+    uploads = [FakeUpload("methodology.md"), FakeUpload("market_data.md")]
+
+    error = validate_uploads(uploads)
+
+    assert error is not None
+    assert "company_brief.md" in error
+
+
+def test_validate_uploads_accepts_three_required_files():
+    uploads = [FakeUpload(name) for name in REQUIRED_INPUT_FILES]
+
+    assert validate_uploads(uploads) is None
+
+
+def test_validate_uploads_message_names_each_missing_file():
+    uploads = [FakeUpload("methodology.md")]
+
+    error = validate_uploads(uploads)
+
+    assert error is not None
+    assert "company_brief.md" in error
+    assert "market_data.md" in error
 
 
 def test_validate_input_dir_reports_missing_required_names(tmp_path):

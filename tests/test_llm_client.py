@@ -37,6 +37,8 @@ def _success(content="hello", tokens=5):
 
 def _make_client(monkeypatch, key=SECRET):
     monkeypatch.setattr(llm_client, "load_dotenv", lambda *args, **kwargs: None)
+    for name in ("GENERATOR_API_KEY", "GENERATOR_BASE_URL", "GENERATOR_MODEL", "QC_API_KEY", "QC_BASE_URL", "QC_MODEL"):
+        monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("LLM_API_KEY", key)
     return llm_client.LLMClient()
 
@@ -52,6 +54,16 @@ def test_init_requires_api_key(monkeypatch):
     monkeypatch.delenv("LLM_API_KEY", raising=False)
 
     with pytest.raises(ValueError, match="LLM_API_KEY is not set"):
+        llm_client.LLMClient()
+
+
+def test_init_rejects_non_ascii_api_key(monkeypatch):
+    monkeypatch.setattr(llm_client, "load_dotenv", lambda *args, **kwargs: None)
+    monkeypatch.delenv("GENERATOR_API_KEY", raising=False)
+    monkeypatch.delenv("QC_API_KEY", raising=False)
+    monkeypatch.setenv("LLM_API_KEY", "sk-or-твой_ключ")
+
+    with pytest.raises(ValueError, match="non-ASCII"):
         llm_client.LLMClient()
 
 
@@ -121,6 +133,35 @@ def test_chat_completion_key_error_on_unexpected_json(monkeypatch):
     )
 
     with pytest.raises(RuntimeError, match="'content'"):
+        client.chat_completion([{"role": "user", "content": "hi"}])
+
+
+def test_chat_completion_retries_when_content_is_none(monkeypatch):
+    client = _make_client(monkeypatch)
+    delays = _no_sleep(monkeypatch)
+    attempts = []
+    empty = FakeResponse({"choices": [{"message": {"content": None}, "finish_reason": "length"}]})
+
+    def fake_post(*args, **kwargs):
+        attempts.append(1)
+        if len(attempts) == 1:
+            return empty
+        return _success("recovered")
+
+    monkeypatch.setattr(llm_client.requests, "post", fake_post)
+
+    assert client.chat_completion([{"role": "user", "content": "hi"}]) == "recovered"
+    assert len(attempts) == 2
+    assert delays == [llm_client.RETRY_DELAY_SECONDS]
+
+
+def test_chat_completion_raises_clear_error_after_none_content(monkeypatch):
+    client = _make_client(monkeypatch)
+    _no_sleep(monkeypatch)
+    empty = FakeResponse({"choices": [{"message": {"content": None}, "finish_reason": "length"}]})
+    monkeypatch.setattr(llm_client.requests, "post", lambda *args, **kwargs: empty)
+
+    with pytest.raises(RuntimeError, match="empty content"):
         client.chat_completion([{"role": "user", "content": "hi"}])
 
 
@@ -206,3 +247,8 @@ def test_chat_completion_json_raises_value_error_on_invalid_json(monkeypatch):
 )
 def test_strip_json_fences(raw, expected):
     assert llm_client._strip_json_fences(raw) == expected
+
+
+def test_strip_json_fences_rejects_none():
+    with pytest.raises(ValueError, match="empty content"):
+        llm_client._strip_json_fences(None)

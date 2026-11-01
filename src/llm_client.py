@@ -52,9 +52,15 @@ def _load_config(config: str) -> LLMConfig:
 
 def _require_api_key(config: str, api_key: str | None) -> str:
     """Return the API key or raise an actionable configuration error."""
-    if api_key:
-        return api_key
     prefix = "GENERATOR" if config == CONFIG_GENERATOR else "QC"
+    if api_key:
+        if not api_key.isascii():
+            raise ValueError(
+                f"{prefix}_API_KEY contains non-ASCII characters (e.g. Cyrillic), "
+                "which cannot be sent in an HTTP Authorization header. "
+                "Use the raw ASCII API key from the provider, not a placeholder."
+            )
+        return api_key
     raise ValueError(
         f"LLM_API_KEY is not set and {prefix}_API_KEY is not set. "
         "Create a .env file in the project root (see .env.example) or export the variable."
@@ -73,6 +79,11 @@ def format_system_message(text: str) -> dict[str, str]:
 
 def _strip_json_fences(raw: str) -> str:
     """Remove markdown code fences and surrounding whitespace from a raw response."""
+    if not isinstance(raw, str):
+        raise ValueError(
+            "chat_completion returned empty content (None); the model likely exhausted "
+            "max_tokens on reasoning before producing a visible answer"
+        )
     cleaned = raw.strip()
     if cleaned.startswith("```"):
         cleaned = cleaned.removeprefix("```json").removeprefix("```")
@@ -163,11 +174,17 @@ class LLMClient:
                 )
                 response.raise_for_status()
                 data = response.json()
-                content = data["choices"][0]["message"]["content"]
+                choice = data["choices"][0]
+                content = choice["message"]["content"]
+                if not isinstance(content, str) or not content.strip():
+                    raise ValueError(
+                        f"chat_completion returned empty content (finish_reason={choice.get('finish_reason')}); "
+                        "the model likely exhausted max_tokens on reasoning"
+                    )
                 tokens = data.get("usage", {}).get("completion_tokens", 0)
                 logger.info("chat_completion ok in %.2fs (%d tokens)", elapsed, tokens)
                 return content
-            except (requests.RequestException, KeyError, json.JSONDecodeError) as exc:
+            except (requests.RequestException, KeyError, ValueError) as exc:
                 last_error = exc
                 logger.warning(
                     "chat_completion attempt %d/%d failed: %s",

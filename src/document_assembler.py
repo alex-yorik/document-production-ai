@@ -279,7 +279,7 @@ class DocumentAssembler:
 
 ### Improvement Metrics
 - Score Improvement: {m["draft_score"]} → {m["final_score"]} (**{m["score_delta_text"]}**)
-- Issues Resolved: {m["resolved"]}/{m["draft_issues"]} (**{m["resolution_pct"]}%**)
+- Draft Issues No Longer Reported: {m["resolved"]}/{m["draft_issues"]} (**{m["resolution_pct"]}%**)
 - Sections Improved: {m["resolved_sections"]}
 
 ---

@@ -10,7 +10,7 @@
 ├── output/              # generated reports (gitignored)
 ├── project_state/       # intermediate artifacts (gitignored)
 ├── scripts/
-│   └── smoke_llm.py     # manual live check (needs DEEPSEEK_API_KEY, not part of the test suite)
+│   └── smoke_llm.py     # manual live check (needs GENERATOR_API_KEY / QC_API_KEY, not part of the test suite)
 ├── tests/               # offline pytest suite
 │   ├── test_config_paths.py
 │   ├── test_document_assembler.py

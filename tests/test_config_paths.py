@@ -92,6 +92,9 @@ def _make_client(
     base_url: str = "https://example.test/v1",
     model: str = "custom-model",
 ) -> LLMClient:
+    monkeypatch.setattr(llm_client, "load_dotenv", lambda *args, **kwargs: None)
+    for name in ("GENERATOR_API_KEY", "GENERATOR_BASE_URL", "GENERATOR_MODEL", "QC_API_KEY", "QC_BASE_URL", "QC_MODEL"):
+        monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("LLM_API_KEY", "test-key")
     monkeypatch.setenv("LLM_BASE_URL", base_url)
     monkeypatch.setenv("LLM_MODEL", model)

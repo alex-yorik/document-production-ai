@@ -15,6 +15,8 @@ OUTPUT_DIR = PROJECT_ROOT / "output"
 
 DIRECTORIES = (INPUT_DIR, STATE_DIR, OUTPUT_DIR)
 
+REQUIRED_INPUT_FILES = ("company_brief.md", "methodology.md", "market_data.md")
+
 logger = logging.getLogger(__name__)
 
 

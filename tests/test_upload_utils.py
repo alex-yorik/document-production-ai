@@ -5,8 +5,8 @@ import pytest
 from src.upload_utils import (
     MAX_UPLOAD_BYTES,
     MAX_UPLOAD_FILES,
-    MIN_UPLOAD_FILES,
     clean_input_dir,
+    escape_dollars,
     save_uploaded_files,
     validate_uploads,
 )
@@ -84,14 +84,13 @@ def test_validate_uploads_rejects_oversized_file():
     assert "10 MB" in error
 
 
-@pytest.mark.parametrize("count", [MIN_UPLOAD_FILES - 1, MAX_UPLOAD_FILES + 1])
-def test_validate_uploads_rejects_count_outside_range(count):
-    uploads = [FakeUpload(f"file_{index}.md") for index in range(count)]
+def test_validate_uploads_rejects_too_many_files():
+    uploads = [FakeUpload(f"file_{index}.md") for index in range(MAX_UPLOAD_FILES + 1)]
 
     error = validate_uploads(uploads)
 
     assert error is not None
-    assert f"{MIN_UPLOAD_FILES} to {MAX_UPLOAD_FILES}" in error
+    assert "3 to 5" in error
 
 
 def test_validate_uploads_requires_methodology():
@@ -107,6 +106,22 @@ def test_validate_uploads_requires_methodology():
 
 
 def test_validate_uploads_accepts_minimal_valid_set():
-    uploads = [FakeUpload("methodology.md"), FakeUpload("company_brief.md")]
+    uploads = [
+        FakeUpload("methodology.md"),
+        FakeUpload("company_brief.md"),
+        FakeUpload("market_data.md"),
+    ]
 
     assert validate_uploads(uploads) is None
+
+
+def test_escape_dollars_escapes_each_amount():
+    assert escape_dollars("$3.1B, $2.0B") == "\\$3.1B, \\$2.0B"
+
+
+def test_escape_dollars_leaves_already_escaped_text_unchanged():
+    assert escape_dollars("\\$3.1B") == "\\$3.1B"
+
+
+def test_escape_dollars_handles_empty_string():
+    assert escape_dollars("") == ""

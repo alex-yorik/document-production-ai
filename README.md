@@ -38,8 +38,8 @@ does not blindly approve its own output.
 7. **Document Assembly** — styled DOCX + QC report
 
 The system uses two different LLMs: GPT-4o-mini for document generation and
-GLM-5.3-Flash for quality control review. This separation avoids self-review
-bias and ensures objective quality assessment.
+GLM-5.3-Flash for quality control review. This separation reduces self-review
+bias; it does not guarantee objective or correct review.
 
 Data flow and storage details: [ARCHITECTURE.md](ARCHITECTURE.md).
 
@@ -90,7 +90,7 @@ QC has two parts:
    unsupported forecasts and derived calculations, and tone/structure. It
    returns issues graded HIGH / MEDIUM / LOW and an overall score (0–100).
    QC uses a DIFFERENT LLM (GLM 5.3 Flash) than the generator (GPT-4o-mini)
-   to avoid self-review bias and ensure objective quality control.
+   to reduce self-review bias; it does not guarantee objective or correct review.
 2. **Deterministic numeric check** (`_check_numeric_traceability`) — scans every
    numeric token in every section and flags tokens that do not occur in the
    source chunks. These flags are added as HIGH issues marked `(automated check)`.
@@ -98,26 +98,27 @@ QC has two parts:
 The reviewer is AI-assisted and does not guarantee the absence of
 hallucinations; remaining issues are reported for human review.
 
-### Demo results
+### Demo Results
 
-> Result of one run on one synthetic dataset, a single sample, not a benchmark.
+**Dataset:** Northwind (demo/input/), synthetic English-language brief  
+**Models:** GPT-4o-mini (generator), GLM-5.3-Flash (QC)  
+**Date:** 2026-11-01 | **Commit:** dce0bdc
 
-Latest run (dual-LLM architecture: GPT-4o-mini for generation, GLM-5.3-Flash
-for objective QC review):
+| Metric | Value |
+|--------|-------|
+| Draft Quality Score | 62/100 |
+| Final Quality Score | 72/100 |
+| Score Improvement | +10 |
+| Draft Issues | 10 (HIGH: 4, MEDIUM: 5, LOW: 1) |
+| Final Issues | 10 (HIGH: 1, MEDIUM: 8, LOW: 1) |
+| Draft Issues No Longer Reported | 10/10 (100%) |
+| Sections Improved | 4 |
 
-| Metric        | Draft                        | Final (after revision)       |
-| ------------- | ---------------------------- | ---------------------------- |
-| Quality score | 62/100                       | 74/100                       |
-| Issues        | 12 (6 HIGH, 5 MEDIUM, 1 LOW) | 11 (2 HIGH, 8 MEDIUM, 1 LOW) |
+*One run, one synthetic dataset, not a benchmark.*
 
-- Score improvement: 62 → 74 (+12)
-- Issues resolved: 12/12 (100%)
-- Sections improved: 5
-- 2 HIGH-severity issues remain, flagged for human review.
+*An issue counts as "no longer reported" also when it was rephrased or downgraded; this is not a semantic verification.*
 
-Raw output: `demo/expected/QC_Report.md`. See
-[docs/reports/portfolio-audit-report.md](docs/reports/portfolio-audit-report.md)
-for the audit context.
+**Raw output:** [demo/expected/QC_Report.md](demo/expected/QC_Report.md)
 
 ## Revision Loop
 
@@ -139,11 +140,8 @@ human review, not hidden.
 plus `demo/expected/` with the outputs of a real pipeline run. No real client
 data is used anywhere in this repository.
 
-![Pipeline](docs/pipeline.png)
-
-![QC Report](docs/qc-report.png)
-
-![Final Document](docs/final-document.png)
+`input/` is a second sample dataset (EdTech in Southeast Asia, Russian-language
+brief). All companies and figures are fictional; none are real.
 
 ## Screenshots
 
@@ -154,6 +152,10 @@ data is used anywhere in this repository.
 ### QC Report with Metrics
 
 ![QC Report](docs/assets/demo_qc_report.png)
+
+### Draft Issues (HIGH Severity)
+
+![Draft Issues](docs/assets/demo_draft_issues.png)
 
 ## Tech Stack
 
@@ -185,9 +187,10 @@ For tests and linting, install the dev requirements instead:
 pip install -r requirements-dev.txt
 ```
 
-The pipeline requires exactly these three input files in the input directory:
+The pipeline requires these three input files in the input directory:
 `company_brief.md`, `market_data.md`, and `methodology.md`. The default
-`input/` directory and `demo/input/` both contain them.
+`input/` directory and `demo/input/` both contain them. Additional `.md`/`.txt`
+files are optional: they are ingested and used for retrieval only.
 
 ## Configuration
 
@@ -208,10 +211,10 @@ QC_MODEL=z-ai/glm-5.3-flash
 ### Dual-LLM Architecture
 
 - **Generator:** GPT-4o-mini (OpenAI via OpenRouter) — outline, sections, revision.
-- **QC Reviewer:** GLM 5.3 Flash (Zhipu AI via OpenRouter) — independent review.
+- **QC Reviewer:** GLM 5.3 Flash (Zhipu AI via OpenRouter) — separate review model.
 
-Using a different model for QC avoids self-review bias: the generator cannot
-quietly approve its own unsupported claims.
+Using a different model for QC reduces self-review bias: the generator is less
+likely to approve its own unsupported claims.
 
 `.env` is gitignored and is never committed. Optional settings (endpoint,
 model, report title) are documented in `.env.example`. The API key is obtained
@@ -251,7 +254,9 @@ derived from the repository root.
 streamlit run app.py
 ```
 
-- upload source documents through the browser
+- upload 3–5 source documents through the browser; all three required files
+  (`company_brief.md`, `market_data.md`, `methodology.md`) must be included, and
+  up to two extra `.md`/`.txt` files are used for retrieval only
 - before/after metrics (draft score, final score, resolved issues) in the interface
 - download `Final_Report.docx` and `QC_Report.md` with one button
 
@@ -259,7 +264,7 @@ streamlit run app.py
 
 ## Tests & CI
 
-15 test files, 122 test functions; last run: 122 passed, 0 skipped; coverage 92% (packages `src/`, `run_pipeline.py`).
+16 test files, 109 test functions; last full run: 125 passed (parametrized cases included), 4 failed (local `.env` overrides monkeypatch — known isolation defect, not a code issue); coverage 91.21% (packages `src/` and `run_pipeline.py`; the Streamlit UI `app.py` is outside the coverage gate, see TECH_DEBT).
 
 Run offline tests locally with:
 
@@ -272,8 +277,8 @@ The suite needs no API keys and no network. The CI workflow runs lint, format
 check, tests with the coverage gate, bandit, gitleaks and the modularity check
 on every push and pull request.
 
-Required checks on this branch: validate, modularity, security (verified in the
-Actions tab on 2026-10-30).
+Required checks: `validate`, `modularity`, `security` — verified in the Actions
+tab on 2026-10-31.
 
 ## Limitations
 

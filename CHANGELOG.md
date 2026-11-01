@@ -1,9 +1,23 @@
 # Changelog
 
-All entries correspond to commits on `chore/portfolio-audit-fixes` since
-`main` (baseline `86878d0`, 2026-10-29). Entries use conventional-commit types.
+Changes since baseline 86878d0 (2026-10-29). Entries use conventional-commit
+types.
 
 ## Unreleased
+
+### Fixed
+
+- `fix` — K1: align README demo results with actual web run (62→72, +10) (`a1425ab`)
+- `fix` — K2: unify provider facts and reduce independence claims (`7754b3b`)
+- `fix` — K3: mark `input/` as synthetic dataset (EdTech SEA, Russian) (`1274cd1`)
+- `fix` — K4: fix dollar sign rendering and unify input file contract (`c5daa9c`)
+- `fix` — K6: update test counts and coverage to factual values (`8699138`)
+- `fix` — K7: clean audit report paths and add English summary (this commit)
+
+### Changed
+
+- `feat` — switch LLM provider from DeepSeek to OpenRouter (GPT-4o-mini + GLM-5.3-Flash) (`82db8c9`)
+- `feat` — add iterative revision loop with convergence control (`ed953e6`)
 
 ### Features
 

@@ -9,8 +9,9 @@ Discovery date for open items: 2026-10-29.
   the underlying claim was fixed. (2026-10-29)
 - **Single demo sample.** Demo evidence is one run on one synthetic dataset; it
   is not a benchmark and has no confidence interval. (2026-10-29)
-- **Same LLM family writes and reviews.** Generator and reviewer are not
-  independent, so scores are indicative only. (2026-10-29)
+- **Shared-bias risk remains.** Different model families reduce but do not
+  eliminate shared-bias risk; scores are indicative and not independently
+  validated. (2026-10-31)
 - **Retrieval without embeddings.** Retrieval is a matching-word counter over
   chunks, not a semantic search layer. (2026-10-29)
 - **mypy is not enabled.** Static typing is not part of the gate; this is an
@@ -18,12 +19,18 @@ Discovery date for open items: 2026-10-29.
 - **`app.py` is outside the coverage gate.** Streamlit UI logic was extracted to
   `src/upload_utils.py` and is covered there, but `app.py` itself is not measured.
   This is an owner-approved deviation from TST-04 (Q4). (2026-10-29)
-- **`demo/expected/` needs a rebuild.** The stored outputs predate the PA-02 and
-  PA-05 fixes. Rebuilding requires the owner's API key (owner task O-01).
-  (2026-10-29)
+
+## Closed / Replaced
+
+- **2026-10-31 — "Same LLM family writes and reviews" was replaced.** The claim
+  is incorrect after the switch to two different models (GPT-4o-mini generator,
+  GLM-5.3-Flash reviewer); it is superseded by the open shared-bias item above.
 
 ## Closed
 
+- **2026-10-31 — `demo/expected/` rebuilt.** The stored outputs now reflect the
+  current pipeline. Rebuilt with dual-LLM architecture (GPT-4o-mini +
+  GLM-5.3-Flash).
 - **2026-10-29 — obsolete image-todo note.** The `docs` image-todo markdown file
   was removed with `git rm`; the pending idea (an optional architecture image) is
   not blocking publication.
