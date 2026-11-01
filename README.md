@@ -122,6 +122,14 @@ hallucinations; remaining issues are reported for human review.
 
 **Raw output:** [demo/expected/QC_Report.md](demo/expected/QC_Report.md)
 
+## Screenshots
+
+![Main screen metrics](docs/assets/demo_main_screen.png)
+
+![QC report summary](docs/assets/demo_qc_report.png)
+
+![Draft HIGH issues](docs/assets/demo_draft_issues.png)
+
 ## Revision Loop
 
 Sections flagged with HIGH-severity issues are regenerated with the issues and
@@ -144,20 +152,6 @@ data is used anywhere in this repository.
 
 `input/` is a second sample dataset (EdTech in Southeast Asia, Russian-language
 brief). All companies and figures are fictional; none are real.
-
-## Screenshots
-
-### Main Interface
-
-![Demo Main Screen](docs/assets/demo_main_screen.png)
-
-### QC Report with Metrics
-
-![QC Report](docs/assets/demo_qc_report.png)
-
-### Draft Issues (HIGH Severity)
-
-![Draft Issues](docs/assets/demo_draft_issues.png)
 
 ## Tech Stack
 
