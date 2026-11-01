@@ -1,4 +1,4 @@
-"""OpenRouter LLM client with separate generator and QC model configurations."""
+"""LLM client with separate generator and QC model configurations."""
 
 import json
 import logging
@@ -10,7 +10,8 @@ import requests
 from dotenv import load_dotenv
 
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
-DEFAULT_GENERATOR_MODEL = "deepseek/deepseek-v4-flash"
+DEFAULT_GENERATOR_BASE_URL = "https://api.deepseek.com/v1"
+DEFAULT_GENERATOR_MODEL = "deepseek-flash"
 DEFAULT_QC_MODEL = "z-ai/glm-5.3-flash"
 DEFAULT_MODEL_NAME = DEFAULT_GENERATOR_MODEL
 CONFIG_GENERATOR = "generator"
@@ -39,7 +40,7 @@ def _load_config(config: str) -> LLMConfig:
     """Resolve API key, base URL and model for a named LLM role."""
     if config == CONFIG_GENERATOR:
         api_key = os.getenv("GENERATOR_API_KEY") or os.getenv("LLM_API_KEY")
-        base_url = os.getenv("GENERATOR_BASE_URL") or os.getenv("LLM_BASE_URL") or DEFAULT_BASE_URL
+        base_url = os.getenv("GENERATOR_BASE_URL") or os.getenv("LLM_BASE_URL") or DEFAULT_GENERATOR_BASE_URL
         model = os.getenv("GENERATOR_MODEL") or os.getenv("LLM_MODEL") or DEFAULT_GENERATOR_MODEL
     elif config == CONFIG_QC:
         api_key = os.getenv("QC_API_KEY") or os.getenv("LLM_API_KEY")
@@ -93,7 +94,7 @@ def _strip_json_fences(raw: str) -> str:
 
 
 class LLMClient:
-    """OpenRouter client bound to a generator or QC configuration."""
+    """Client bound to a generator or QC configuration."""
 
     def __init__(self, config: str = CONFIG_GENERATOR) -> None:
         """Load the API credentials and endpoint for the requested role.

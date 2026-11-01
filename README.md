@@ -162,7 +162,7 @@ brief). All companies and figures are fictional; none are real.
 ## Tech Stack
 
 - Python 3.12
-- OpenRouter (LLM: `deepseek/deepseek-v4-flash` generator, `z-ai/glm-5.3-flash` QC)
+- DeepSeek direct API (generator: `deepseek-flash` = DeepSeek V4.1 Flash), OpenRouter (QC: `z-ai/glm-5.3-flash`)
 - python-docx (DOCX assembly)
 - Streamlit (optional web UI)
 - python-dotenv
@@ -199,10 +199,11 @@ files are optional: they are ingested and used for retrieval only.
 Copy `.env.example` to `.env` and set both API keys:
 
 ```bash
-# Generator: DeepSeek V4 Flash (via OpenRouter)
-GENERATOR_API_KEY=your_openrouter_api_key_here
-GENERATOR_BASE_URL=https://openrouter.ai/api/v1
-GENERATOR_MODEL=deepseek/deepseek-v4-flash
+# Generator: DeepSeek V4.1 Flash (DeepSeek direct API)
+# OpenRouter also supported by changing GENERATOR_BASE_URL/GENERATOR_MODEL.
+GENERATOR_API_KEY=your_deepseek_api_key_here
+GENERATOR_BASE_URL=https://api.deepseek.com/v1
+GENERATOR_MODEL=deepseek-flash
 
 # QC Reviewer: GLM 5.3 Flash (Zhipu AI via OpenRouter)
 QC_API_KEY=your_openrouter_api_key_here
@@ -212,16 +213,17 @@ QC_MODEL=z-ai/glm-5.3-flash
 
 ### Dual-LLM Architecture
 
-- **Generator:** DeepSeek V4 Flash (via OpenRouter) — outline, sections, revision.
+- **Generator:** DeepSeek V4.1 Flash (DeepSeek direct API) — outline, sections, revision.
 - **QC Reviewer:** GLM 5.3 Flash (Zhipu AI via OpenRouter) — separate review model.
 
 Using a different model for QC reduces self-review bias: the generator is less
 likely to approve its own unsupported claims.
 
 `.env` is gitignored and is never committed. Optional settings (endpoint,
-model, report title) are documented in `.env.example`. The API key is obtained
-at [openrouter.ai/keys](https://openrouter.ai/keys). `LLM_API_KEY` remains a
-legacy fallback when the role-specific keys are unset.
+model, report title) are documented in `.env.example`. Get the generator key at
+[platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys) and the
+QC key at [openrouter.ai/keys](https://openrouter.ai/keys). `LLM_API_KEY` remains
+a legacy fallback when the role-specific keys are unset.
 
 To check the API key and connectivity manually, run the smoke script:
 
