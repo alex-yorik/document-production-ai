@@ -102,16 +102,16 @@ hallucinations; remaining issues are reported for human review.
 
 **Dataset:** Northwind (demo/input/), synthetic English-language brief  
 **Models:** GPT-4o-mini (generator), GLM-5.3-Flash (QC)  
-**Date:** 2026-10-31 | **Commit:** 2c9bce5
+**Date:** 2026-11-01 | **Commit:** dce0bdc
 
 | Metric | Value |
 |--------|-------|
 | Draft Quality Score | 62/100 |
-| Final Quality Score | 78/100 |
-| Score Improvement | +16 |
-| Draft Issues | 12 (HIGH: 7, MEDIUM: 4, LOW: 1) |
-| Final Issues | 10 (HIGH: 0, MEDIUM: 10, LOW: 0) |
-| Draft Issues No Longer Reported | 12/12 (100%) |
+| Final Quality Score | 72/100 |
+| Score Improvement | +10 |
+| Draft Issues | 10 (HIGH: 4, MEDIUM: 5, LOW: 1) |
+| Final Issues | 10 (HIGH: 1, MEDIUM: 8, LOW: 1) |
+| Draft Issues No Longer Reported | 10/10 (100%) |
 | Sections Improved | 4 |
 
 *One run, one synthetic dataset, not a benchmark.*
@@ -145,7 +145,17 @@ brief). All companies and figures are fictional; none are real.
 
 ## Screenshots
 
-Screenshots pending update from latest run.
+### Main Interface
+
+![Demo Main Screen](docs/assets/demo_main_screen.png)
+
+### QC Report with Metrics
+
+![QC Report](docs/assets/demo_qc_report.png)
+
+### Draft Issues (HIGH Severity)
+
+![Draft Issues](docs/assets/demo_draft_issues.png)
 
 ## Tech Stack
 

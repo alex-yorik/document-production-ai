@@ -4,136 +4,128 @@
 
 ### Draft Quality (before AI revision)
 - Score: 62/100
-- Total Issues: 12
-  - HIGH: 7
-  - MEDIUM: 4
+- Total Issues: 10
+  - HIGH: 4
+  - MEDIUM: 5
   - LOW: 1
 
 ### Final Quality (after AI revision)
-- Score: 78/100
+- Score: 72/100
 - Total Issues: 10
-  - HIGH: 0
-  - MEDIUM: 10
-  - LOW: 0
+  - HIGH: 1
+  - MEDIUM: 8
+  - LOW: 1
 
 ### Improvement Metrics
-- Score Improvement: 62 → 78 (**+16**)
-- Draft Issues No Longer Reported: 12/12 (**100%**)
+- Score Improvement: 62 → 72 (**+10**)
+- Draft Issues No Longer Reported: 10/10 (**100%**)
 - Sections Improved: 4
 
 ---
 
 ## Draft Issues (before revision)
 
-### HIGH Severity (7 issues)
+### HIGH Severity (4 issues)
 
-1. **Key Risks**: Specific rent figure of €300 per square meter in Berlin and Vienna is not present in any source data or outline.
-   - Location: "average high street retail rents can exceed €300 per square meter"
-   - Suggestion: Remove the specific figure or replace with 'Data not available' per methodology rule 3.
+1. **Executive Summary**: EduVn is described as a key player in higher education, but sources state it specializes in language learning/ESL.
+   - Location: "EduVn: A key player in the higher education space, providing robust platforms for university-level education."
+   - Suggestion: Describe EduVn as a language learning specialist with strong ESL presence, per source data.
 
-2. **Key Risks**: GDPR fine amounts (€20 million or 4% of turnover) are not traceable to market_data.md; methodology prohibits figures not in sources.
-   - Location: "fines that reach up to €20 million or 4% of annual global turnover"
-   - Suggestion: Remove specific figures; state GDPR compliance is required without citing penalty amounts.
+2. **Executive Summary**: PhilLearn is described as offering comprehensive offerings across educational levels, contradicting the source, which positions it in corporate upskilling.
+   - Location: "PhilLearn: Notable for its comprehensive offerings across various educational levels, appealing to a broad demographic."
+   - Suggestion: State PhilLearn targets corporate upskilling with 300+ company partnerships.
 
-3. **Recommendations**: Claims 67% of consumers prioritize sustainably sourced products; source data only supports 48% willingness to pay a premium for sustainable beans.
-   - Location: "67% of consumers prioritize sustainably sourced products"
-   - Suggestion: Replace with the supported 48% figure from the Urban Coffee Consumer Survey 2025.
+3. **Market Overview**: Language learning segment share of 18% does not appear in the source data or outline; only K-12 (38%) and higher education (27%) are supported.
+   - Location: "Language Learning (18%): With 18% of the market share..."
+   - Suggestion: Remove the 18% figure or mark it as 'Data not available' if not present in market_data.md.
 
-4. **Recommendations**: Statistic that 72% of consumers value knowledgeable staff appears nowhere in the outline or source data.
-   - Location: "72% of consumers value knowledgeable staff"
-   - Suggestion: Remove this statistic or mark as 'Data not available'.
+4. **Market Overview**: Specific country revenue figures ($3.1B Indonesia, $2.0B Vietnam, $1.7B Philippines, $1.4B Thailand, $1.2B Malaysia) are not in the source data; sources only identify the three largest markets without figures.
+   - Location: "Indonesia: Estimated at $3.1 billion in 2024... Malaysia: With a forecasted revenue of $1.2 billion..."
+   - Suggestion: Remove all country-level revenue figures; state only that Indonesia, Vietnam, and the Philippines are the largest markets.
 
-5. **Competitive Landscape**: Store counts of 190 (Competitor B) and 120 (Competitor C) are not in the outline key points and cannot be verified against provided sources.
-   - Location: "Number of Stores: 190" / "Number of Stores: 120"
-   - Suggestion: Remove store counts unless they can be traced to the DACH Competitor Tracker source data.
+### MEDIUM Severity (5 issues)
 
-6. **Recommendations**: Statistic '67%' found in text but not verified in source documents (automated check)
-   - Location: Section contains: 67%
-   - Suggestion: Verify statistic '67%' against source data or mark as 'Data not available'
+1. **Executive Summary**: Recommendation to invest in infrastructure development is not among the outline's key points and lacks source support.
+   - Location: "Invest in Infrastructure Development: Consider investing in partnerships or initiatives that aim to improve technological infrastructure..."
+   - Suggestion: Remove or reframe as a risk mitigation note tied to documented infrastructure limitations.
 
-7. **Recommendations**: Statistic '72%' found in text but not verified in source documents (automated check)
-   - Location: Section contains: 72%
-   - Suggestion: Verify statistic '72%' against source data or mark as 'Data not available'
+2. **Key Risks**: Outline requires an explicit 'Data not available' note for certain specific risks; the section omits this required disclosure.
+   - Location: Entire Key Risks section — no 'Data not available' marker present.
+   - Suggestion: Add an explicit 'Data not available' statement where risk data is incomplete, per methodology.
 
-### MEDIUM Severity (4 issues)
+3. **Key Risks**: Claim that non-compliance results in 'substantial penalties' is not supported by source data.
+   - Location: "Non-compliance can result in substantial penalties, which could pose a significant risk..."
+   - Suggestion: Remove or soften to a general compliance-risk statement without asserting specific consequences.
 
-1. **Key Risks**: Fabricated example of a competitor loyalty program ('free coffee after ten purchases') with no source support.
-   - Location: "a loyalty program that grants customers a free coffee after ten purchases"
-   - Suggestion: Remove the invented example; describe loyalty program risk generically.
+4. **Competitive Landscape**: Technological innovation dynamics (AI, adaptive learning algorithms, data analytics) as competitive factors are not mentioned in source data.
+   - Location: "Companies that can effectively leverage new technologies—such as artificial intelligence, adaptive learning algorithms..."
+   - Suggestion: Remove or clearly label as analyst inference rather than sourced fact.
 
-2. **Key Risks**: Reference to 'Barista Guild's Coffee Skills Program' as a specific certification is not supported by sources.
-   - Location: "certifications such as the Barista Guild's Coffee Skills Program are highly regarded"
-   - Suggestion: Remove the specific certification name or state certification requirements generically.
-
-3. **Key Risks**: Claim of a 'surge in demand for plant-based alternatives' is an unsupported trend assertion not present in source data.
-   - Location: "Recent trends have shown a surge in demand for plant-based alternatives"
-   - Suggestion: Remove or rephrase as a hypothesis requiring market research validation.
-
-4. **Competitive Landscape**: Loyalty programs are attributed specifically to Competitors A and B; outline only states established loyalty programs exist without naming which competitors.
-   - Location: "The established loyalty programs of Competitor A and Competitor B"
-   - Suggestion: Rephrase to 'established competitors' loyalty programs' unless source data names them.
+5. **Market Overview**: Growth attributed to 'rising internet penetration, increased smartphone usage, and growing acceptance of online learning' is interpretation not stated in sources; sources note low smartphone penetration in rural areas.
+   - Location: "Such growth can be attributed to a combination of factors, including rising internet penetration, increased smartphone usage..."
+   - Suggestion: Remove unsourced causal explanations or explicitly mark them as assumptions.
 
 ### LOW Severity (1 issues)
 
-1. **Executive Summary**: Executive Summary is overly long and duplicates detailed recommendations that belong in Section 5, reducing C-level conciseness.
-   - Location: Five-item detailed recommendations list within the Executive Summary
-   - Suggestion: Summarize recommendations in 2-3 sentences and defer detail to the Recommendations section.
+1. **Executive Summary**: Marketing-style language ('remarkable', 'compelling opportunity', 'poised for significant growth') conflicts with the data-driven, non-promotional tone required.
+   - Location: "...which represents a remarkable 26% year-over-year growth"; "presents a compelling opportunity"
+   - Suggestion: Replace promotional adjectives with neutral, fact-based phrasing.
 
 
 ---
 
 ## Final Issues (remaining after revision)
 
-### HIGH Severity: None
+### HIGH Severity (1 issues)
 
-### MEDIUM Severity (10 issues)
+1. **Market Overview**: Country-level revenue figures (Indonesia $3.1B, Vietnam $2.0B, Philippines $1.7B, Thailand $1.4B, Malaysia $1.2B) do not appear in the provided source data and cannot be traced to market_data.md.
+   - Location: Revenue by Country: 'Indonesia: $3.1 billion (2024)' etc.
+   - Suggestion: Verify each figure against market_data.md; remove or replace any figure not present in the source data.
 
-1. **Executive Summary**: The combined EUR 3.0 billion figure is a derived calculation (2.4B + 0.6B) but is not explicitly labeled as a calculation, violating methodology rule 2.
-   - Location: The combined target market size for specialty coffee in Germany and Austria is projected to reach EUR 3.0 billion
-   - Suggestion: Add a note such as '(calculated as EUR 2.4B + EUR 0.6B)' when stating the combined figure.
+### MEDIUM Severity (8 issues)
 
-2. **Executive Summary**: Claim that both countries have 'stringent regulations regarding food and beverage distribution' goes beyond the outline's generic 'regulatory compliance' barrier; no source detail supports this characterization.
-   - Location: Both Germany and Austria have stringent regulations regarding food and beverage distribution
-   - Suggestion: Rephrase to 'regulatory compliance requirements' without characterizing stringency, or cite a source.
+1. **Market Overview**: Claim of 'substantial increase from previous years' is unsupported; no prior-year market size data exists in the sources.
+   - Location: 'This represents a substantial increase from previous years...'
+   - Suggestion: Remove the comparison to previous years or mark as 'Data not available'.
 
-3. **Market Overview**: Claim about 'rising prominence of online shopping' is not supported by any source data; the 71% in-store figure alone does not establish an online trend.
-   - Location: Despite the rising prominence of online shopping, 71% of coffee purchases occur in physical stores
-   - Suggestion: Remove the online shopping claim or state 'Data not available' on channel trends per methodology rule 3.
+2. **Market Overview**: Growth drivers (internet penetration, mobile adoption, remote learning emphasis) are speculative and not stated in the source data.
+   - Location: '...rising internet penetration rates, increased adoption of mobile technologies, and a growing emphasis on remote and blended learning...'
+   - Suggestion: Remove unsupported drivers or clearly label them as assumptions requiring validation.
 
-4. **Competitive Landscape**: The outline specifies Competitor A has 310 stores, but the section omits this store count entirely, weakening the competitive benchmark for new entrants.
-   - Location: Competitor A holds the leading position... with a substantial revenue of EUR 0.8 billion
-   - Suggestion: Add 'operating 310 stores' to the Competitor A description.
+3. **Market Overview**: Statement that language learning data is 'partially available' goes beyond sources, which only flag corporate/upskilling data as partially available.
+   - Location: 'Data on the language learning segment and corporate/upskilling market share is partially available.'
+   - Suggestion: Restrict the 'partially available' note to corporate/upskilling only, per source data.
 
-5. **Competitive Landscape**: Market share ranking ('A commands the largest share, followed by B and C') is inferred from revenue figures; no explicit market share data is provided in sources.
-   - Location: Competitor A commands the largest share, followed by Competitor B and Competitor C
-   - Suggestion: Label as an inference from revenue figures or state 'Data not available' for market shares.
+4. **Competitive Landscape**: GoToClass's 'extensive catalog of courses and user-friendly platform' is not supported by source data, which only states 15M+ users and K-12 focus.
+   - Location: 'Their extensive catalog of courses and user-friendly platform are pivotal...'
+   - Suggestion: Remove unsupported product claims; stick to user base and segment focus.
 
-6. **Competitive Landscape**: Claims about 'economies of scale' and Competitor B 'likely appealing to price-sensitive customers' are interpretations not stated in source data.
-   - Location: provides economies of scale... which likely appeals to a broader base of customers, particularly those who are price-sensitive
-   - Suggestion: Hedge clearly as analyst interpretation or remove unsupported reasoning.
+5. **Competitive Landscape**: Claim that EduVn caters to 'various proficiency levels' and is 'a preferred choice for learners' is not in the source data.
+   - Location: 'Their tailored offerings cater to various proficiency levels, making them a preferred choice...'
+   - Suggestion: Limit description to ESL specialization and strong presence as stated in sources.
 
-7. **Key Risks**: Specifically naming Berlin and Vienna as target cities is not supported by any source data; no city-level targeting has been established.
-   - Location: rental costs in cities such as Berlin and Vienna are not available
-   - Suggestion: Refer generically to 'major cities' unless city selection is supported by sources.
+6. **Competitive Landscape**: Technological innovation dynamics (AI, adaptive learning, data analytics shaping competition) are not mentioned in source data.
+   - Location: 'Technological Innovation: The rapid advancement of technology plays a crucial role...'
+   - Suggestion: Remove or reframe as a hypothesis, not a stated market dynamic.
 
-8. **Key Risks**: References to 'health-conscious products' and 'inflation and shifts in disposable income' are not present in source data; only sustainability preference is supported.
-   - Location: a shift towards sustainability or health-conscious products... economic factors such as inflation
-   - Suggestion: Limit volatility discussion to supported consumer preference data or mark as general market context.
+7. **Key Risks**: Claim that non-compliance 'can result in substantial penalties' is not supported by source data.
+   - Location: 'Non-compliance can result in substantial penalties...'
+   - Suggestion: Remove the penalty claim or mark as 'Data not available'.
 
-9. **Recommendations**: Suggesting 'organic and fair-trade certifications' introduces certification types not mentioned in any source data.
-   - Location: potentially including organic and fair-trade certifications
-   - Suggestion: Remove specific certification names or clearly label as illustrative options requiring validation.
+8. **Key Risks**: Outline requires an explicit 'Data not available' note for certain specific risks; the section omits this methodology-required disclosure.
+   - Location: Entire Key Risks section
+   - Suggestion: Add a 'Data not available' note for risk areas lacking source data.
 
-10. **Recommendations**: Characterizing target consumers as 'tech-savvy' is unsupported; sources only indicate age range (25-40) and purchase frequency.
-   - Location: reach tech-savvy consumers who are likely to engage with specialty coffee brands
-   - Suggestion: Replace with 'consumers aged 25-40' to stay within supported data.
+### LOW Severity (1 issues)
 
-### LOW Severity: None
+1. **Executive Summary**: Marketing-style language ('burgeoning market', 'lucrative landscape', 'impressive 19.5%') conflicts with the methodology's ban on marketing clichés.
+   - Location: 'This burgeoning market', 'lucrative landscape', 'an impressive 19.5%'
+   - Suggestion: Replace with neutral, data-driven phrasing (e.g., 'projected 19.5% CAGR').
 
 
 ---
 
 ## Revision Actions Taken
 
-- All HIGH-severity issues from draft were addressed by AI Revision Loop
-- 12 out of 12 issues resolved automatically
+- 1 HIGH-severity issue(s) remain after AI revision — flagged below for human review
+- 10 out of 10 issues resolved automatically
