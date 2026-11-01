@@ -132,6 +132,16 @@ owner-approved:
   `exit-zero`.
 - Dockerfile/docker-compose в проекте нет, поэтому `.dockerignore` не создавался.
 
+### Owner-approved deviations
+
+- Генератор переключён на DeepSeek V4 Flash — решение владельца ради
+  экономии стоимости.
+- Бюджеты токенов outline и section повышены до 16000 — требуется из-за
+  reasoning-вывода модели.
+- Живой прогон на `demo/input` прерван владельцем на Stage 7; цифры
+  Draft 60/100 → Final 68/100 (+8; resolved 22/26) зафиксированы как
+  наблюдение. Артефакты не записаны, `demo/expected/` не изменялся.
+
 ## 4. Сырые выводы проверок (CI-00, после PA-10)
 
 ```text
