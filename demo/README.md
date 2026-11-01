@@ -29,6 +29,4 @@ Russian-language brief); all companies and figures there are fictional too.
 `demo/expected/` shows what a real run produced on this dataset, so you can
 compare your own result with a historical baseline.
 
-**Last updated:** 2026-10-31 | **Commit:** 2c9bce5  
-**Models:** GPT-4o-mini (generator), GLM-5.3-Flash (QC)  
-**Dataset:** Northwind (English), synthetic
+**Last updated:** 2026-11-01 | **Commit:** 6013500 | **Models:** DeepSeek V4.1 Flash (generator, DeepSeek direct), GLM-5.3-Flash (QC, OpenRouter) | **Dataset:** Northwind (English), synthetic

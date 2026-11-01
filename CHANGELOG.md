@@ -16,7 +16,8 @@ types.
 
 ### Changed
 
-- `feat` — switch LLM provider from DeepSeek to OpenRouter (GPT-4o-mini + GLM-5.3-Flash) (`82db8c9`)
+- Final model configuration: generator DeepSeek V4.1 Flash (`deepseek-flash`, DeepSeek direct API); QC reviewer GLM-5.3-Flash (OpenRouter) (`6013500`)
+- Final demo regenerated on DeepSeek V4.1 Flash (76→84, +8); `demo/expected` and screenshots refreshed (this commit)
 - `feat` — add iterative revision loop with convergence control (`ed953e6`)
 
 ### Features

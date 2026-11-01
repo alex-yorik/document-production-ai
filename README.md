@@ -37,7 +37,7 @@ does not blindly approve its own output.
 6. **Revision Loop** — sections with HIGH issues are regenerated (max 1 extra QC pass)
 7. **Document Assembly** — styled DOCX + QC report
 
-The system uses two different LLMs: GPT-4o-mini for document generation and
+The system uses two different LLMs: DeepSeek V4.1 Flash for document generation and
 GLM-5.3-Flash for quality control review. This separation reduces self-review
 bias; it does not guarantee objective or correct review.
 
@@ -89,7 +89,7 @@ QC has two parts:
 1. **LLM reviewer** — checks every section for traceability to the sources,
    unsupported forecasts and derived calculations, and tone/structure. It
    returns issues graded HIGH / MEDIUM / LOW and an overall score (0–100).
-   QC uses a DIFFERENT LLM (GLM 5.3 Flash) than the generator (GPT-4o-mini)
+   QC uses a DIFFERENT LLM (GLM 5.3 Flash) than the generator (DeepSeek V4.1 Flash)
    to reduce self-review bias; it does not guarantee objective or correct review.
 2. **Deterministic numeric check** (`_check_numeric_traceability`) — scans every
    numeric token in every section and flags tokens that do not occur in the
@@ -100,25 +100,35 @@ hallucinations; remaining issues are reported for human review.
 
 ### Demo Results
 
-**Dataset:** Northwind (demo/input/), synthetic English-language brief  
-**Models:** GPT-4o-mini (generator), GLM-5.3-Flash (QC)  
-**Date:** 2026-11-01 | **Commit:** dce0bdc
+**Dataset:** Northwind (demo/input/), synthetic English brief  
+**Models:** DeepSeek V4.1 Flash (`deepseek-flash`, DeepSeek direct API) — generator; GLM-5.3-Flash (OpenRouter) — QC  
+**Date:** 2026-11-01 | **Commit:** 6013500
 
 | Metric | Value |
 |--------|-------|
-| Draft Quality Score | 62/100 |
-| Final Quality Score | 72/100 |
-| Score Improvement | +10 |
-| Draft Issues | 10 (HIGH: 4, MEDIUM: 5, LOW: 1) |
-| Final Issues | 10 (HIGH: 1, MEDIUM: 8, LOW: 1) |
-| Draft Issues No Longer Reported | 10/10 (100%) |
-| Sections Improved | 4 |
+| Draft Quality Score | 76/100 |
+| Final Quality Score | 84/100 |
+| Score Improvement | +8 |
+| Draft Issues | 12 (HIGH: 5, MEDIUM: 7, LOW: 0) |
+| Final Issues | 12 (HIGH: 2, MEDIUM: 6, LOW: 4) |
+| Draft Issues No Longer Reported | 12/12 (**100%**) |
+| Sections Improved | 6 |
 
 *One run, one synthetic dataset, not a benchmark.*
+
+*Results vary between runs: score improvement ranged +8…+16 across observed runs on this dataset; the table records one run.*
 
 *An issue counts as "no longer reported" also when it was rephrased or downgraded; this is not a semantic verification.*
 
 **Raw output:** [demo/expected/QC_Report.md](demo/expected/QC_Report.md)
+
+## Screenshots
+
+![Main screen metrics](docs/assets/demo_main_screen.png)
+
+![QC report summary](docs/assets/demo_qc_report.png)
+
+![Draft HIGH issues](docs/assets/demo_draft_issues.png)
 
 ## Revision Loop
 
@@ -143,24 +153,10 @@ data is used anywhere in this repository.
 `input/` is a second sample dataset (EdTech in Southeast Asia, Russian-language
 brief). All companies and figures are fictional; none are real.
 
-## Screenshots
-
-### Main Interface
-
-![Demo Main Screen](docs/assets/demo_main_screen.png)
-
-### QC Report with Metrics
-
-![QC Report](docs/assets/demo_qc_report.png)
-
-### Draft Issues (HIGH Severity)
-
-![Draft Issues](docs/assets/demo_draft_issues.png)
-
 ## Tech Stack
 
 - Python 3.12
-- OpenRouter (LLM: `openai/gpt-4o-mini` generator, `z-ai/glm-5.3-flash` QC)
+- DeepSeek direct API (generator: `deepseek-flash` = DeepSeek V4.1 Flash), OpenRouter (QC: `z-ai/glm-5.3-flash`)
 - python-docx (DOCX assembly)
 - Streamlit (optional web UI)
 - python-dotenv
@@ -197,10 +193,11 @@ files are optional: they are ingested and used for retrieval only.
 Copy `.env.example` to `.env` and set both API keys:
 
 ```bash
-# Generator: GPT-4o-mini (OpenAI via OpenRouter)
-GENERATOR_API_KEY=your_openrouter_api_key_here
-GENERATOR_BASE_URL=https://openrouter.ai/api/v1
-GENERATOR_MODEL=openai/gpt-4o-mini
+# Generator: DeepSeek V4.1 Flash (DeepSeek direct API)
+# OpenRouter also supported by changing GENERATOR_BASE_URL/GENERATOR_MODEL.
+GENERATOR_API_KEY=your_deepseek_api_key_here
+GENERATOR_BASE_URL=https://api.deepseek.com/v1
+GENERATOR_MODEL=deepseek-flash
 
 # QC Reviewer: GLM 5.3 Flash (Zhipu AI via OpenRouter)
 QC_API_KEY=your_openrouter_api_key_here
@@ -210,16 +207,17 @@ QC_MODEL=z-ai/glm-5.3-flash
 
 ### Dual-LLM Architecture
 
-- **Generator:** GPT-4o-mini (OpenAI via OpenRouter) — outline, sections, revision.
+- **Generator:** DeepSeek V4.1 Flash (DeepSeek direct API) — outline, sections, revision.
 - **QC Reviewer:** GLM 5.3 Flash (Zhipu AI via OpenRouter) — separate review model.
 
 Using a different model for QC reduces self-review bias: the generator is less
 likely to approve its own unsupported claims.
 
 `.env` is gitignored and is never committed. Optional settings (endpoint,
-model, report title) are documented in `.env.example`. The API key is obtained
-at [openrouter.ai/keys](https://openrouter.ai/keys). `LLM_API_KEY` remains a
-legacy fallback when the role-specific keys are unset.
+model, report title) are documented in `.env.example`. Get the generator key at
+[platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys) and the
+QC key at [openrouter.ai/keys](https://openrouter.ai/keys). `LLM_API_KEY` remains
+a legacy fallback when the role-specific keys are unset.
 
 To check the API key and connectivity manually, run the smoke script:
 
@@ -257,14 +255,14 @@ streamlit run app.py
 - upload 3–5 source documents through the browser; all three required files
   (`company_brief.md`, `market_data.md`, `methodology.md`) must be included, and
   up to two extra `.md`/`.txt` files are used for retrieval only
-- before/after metrics (draft score, final score, resolved issues) in the interface
+- before/after metrics (draft score, final score, Draft Issues No Longer Reported) in the interface
 - download `Final_Report.docx` and `QC_Report.md` with one button
 
 > **WARNING: THE WEB UI OVERWRITES MARKDOWN/TEXT FILES IN `input/` WHEN YOU UPLOAD FILES.**
 
 ## Tests & CI
 
-16 test files, 109 test functions; last full run: 125 passed (parametrized cases included), 4 failed (local `.env` overrides monkeypatch — known isolation defect, not a code issue); coverage 91.21% (packages `src/` and `run_pipeline.py`; the Streamlit UI `app.py` is outside the coverage gate, see TECH_DEBT).
+16 test files, 120 test functions; last full run: 135 passed (parametrized cases included); coverage 91.33% (packages `src/` and `run_pipeline.py`; the Streamlit UI `app.py` is outside the coverage gate, see TECH_DEBT).
 
 Run offline tests locally with:
 
@@ -285,7 +283,8 @@ tab on 2026-10-31.
 - An issue counts as resolved also when it was rephrased or downgraded in
   severity; there is no semantic verification of the fix.
 - Retrieval is a matching-word counter over chunks, not embeddings.
-- One LLM provider (OpenRouter) is used; there is no provider fallback.
+- Two external providers (DeepSeek for generation, OpenRouter for QC) are used;
+  there is no provider fallback.
 - There is no authentication and no multi-user support.
 - Document quality depends on the quality of the supplied sources.
 
@@ -298,9 +297,9 @@ human-in-the-loop review — see [docs/roadmap.md](docs/roadmap.md).
 
 ## Data & Privacy
 
-Document text and fragments of the source documents are sent to the OpenRouter
-API (model `openai/gpt-4o-mini`) for generation and review. Do not upload personal, confidential, or
-regulated data. Using real data requires informed consent, a data retention
+Document text and fragments of the source documents are sent to two external
+providers: the DeepSeek API (generator) and the OpenRouter API (QC reviewer).
+Do not upload personal, confidential, or regulated data. Using real data requires informed consent, a data retention
 policy, and a review of the applicable local legislation. No regulatory
 compliance is claimed.
 
