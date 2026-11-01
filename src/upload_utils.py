@@ -86,11 +86,3 @@ def clean_input_dir(input_dir: str | Path = INPUT_DIR) -> None:
 def format_delta(value: int) -> str:
     """Format a signed delta for the metrics display."""
     return f"+{value}" if value > 0 else str(value)
-
-def escape_dollars(text: str) -> str:
-    """Escape dollar signs for Streamlit markdown rendering."""
-    if not text:
-        return text
-    # Replace $ with \$ but don't double-escape already escaped \$
-    import re
-    return re.sub(r'(?<!\\)\$', r'\$', text)

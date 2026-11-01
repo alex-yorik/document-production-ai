@@ -37,6 +37,8 @@ def _success(content="hello", tokens=5):
 
 def _make_client(monkeypatch, key=SECRET):
     monkeypatch.setattr(llm_client, "load_dotenv", lambda *args, **kwargs: None)
+    for name in ("GENERATOR_API_KEY", "GENERATOR_BASE_URL", "GENERATOR_MODEL", "QC_API_KEY", "QC_BASE_URL", "QC_MODEL"):
+        monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("LLM_API_KEY", key)
     return llm_client.LLMClient()
 
@@ -134,6 +136,35 @@ def test_chat_completion_key_error_on_unexpected_json(monkeypatch):
         client.chat_completion([{"role": "user", "content": "hi"}])
 
 
+def test_chat_completion_retries_when_content_is_none(monkeypatch):
+    client = _make_client(monkeypatch)
+    delays = _no_sleep(monkeypatch)
+    attempts = []
+    empty = FakeResponse({"choices": [{"message": {"content": None}, "finish_reason": "length"}]})
+
+    def fake_post(*args, **kwargs):
+        attempts.append(1)
+        if len(attempts) == 1:
+            return empty
+        return _success("recovered")
+
+    monkeypatch.setattr(llm_client.requests, "post", fake_post)
+
+    assert client.chat_completion([{"role": "user", "content": "hi"}]) == "recovered"
+    assert len(attempts) == 2
+    assert delays == [llm_client.RETRY_DELAY_SECONDS]
+
+
+def test_chat_completion_raises_clear_error_after_none_content(monkeypatch):
+    client = _make_client(monkeypatch)
+    _no_sleep(monkeypatch)
+    empty = FakeResponse({"choices": [{"message": {"content": None}, "finish_reason": "length"}]})
+    monkeypatch.setattr(llm_client.requests, "post", lambda *args, **kwargs: empty)
+
+    with pytest.raises(RuntimeError, match="empty content"):
+        client.chat_completion([{"role": "user", "content": "hi"}])
+
+
 def test_chat_completion_json_decode_error_is_retried(monkeypatch):
     client = _make_client(monkeypatch)
     delays = _no_sleep(monkeypatch)
@@ -216,3 +247,8 @@ def test_chat_completion_json_raises_value_error_on_invalid_json(monkeypatch):
 )
 def test_strip_json_fences(raw, expected):
     assert llm_client._strip_json_fences(raw) == expected
+
+
+def test_strip_json_fences_rejects_none():
+    with pytest.raises(ValueError, match="empty content"):
+        llm_client._strip_json_fences(None)

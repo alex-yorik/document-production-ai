@@ -14,7 +14,11 @@ from src.utils import STATE_DIR, load_json, save_json
 logger = logging.getLogger(__name__)
 
 QC_TEMPERATURE = 0.2
-QC_MAX_TOKENS = 2000
+# The QC model (z-ai/glm-5.3-flash) is a reasoning model: it spends part of the
+# completion budget on hidden reasoning before emitting JSON. A 2000-token budget
+# was fully consumed by reasoning, returning content=None and a zero-score report.
+# 16000 leaves room for both reasoning and the review JSON.
+QC_MAX_TOKENS = 16000
 CHUNKS_PATH = STATE_DIR / "chunks.json"
 QC_REPORT_PATH = STATE_DIR / "qc_report.json"
 
