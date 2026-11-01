@@ -7,8 +7,9 @@ limitations include:
   rephrased or downgraded in severity; there is no semantic verification of the fix.
 - **Retrieval is a matching-word counter** over chunks, not embeddings-based
   semantic search.
-- **One LLM provider.** The pipeline uses OpenRouter only; there is no provider
-  fallback.
+- **Two external LLM providers.** Uploaded documents are sent to DeepSeek
+  (generation) and OpenRouter (QC review); there is no provider fallback and no
+  on-premise mode.
 - **No authentication or multi-user support.** The Streamlit UI is single-user
   and local.
 - **Source-dependent quality.** Document quality depends on the quality of the

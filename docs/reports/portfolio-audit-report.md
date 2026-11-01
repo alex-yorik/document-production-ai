@@ -134,11 +134,10 @@ owner-approved:
 
 ### Owner-approved deviations
 
-- Генератор переключён на DeepSeek V4 Flash — решение владельца ради
-  экономии стоимости.
-- Второе переключение генератора на DeepSeek V4.1 Flash (прямой API DeepSeek) —
-  решение владельца после деградации v4-flash в двух веб-прогонах (58→58 и
-  52→48, отрицательное улучшение).
+- Final model configuration set by owner decision (cost/quality): generator
+  DeepSeek V4.1 Flash via DeepSeek direct API; QC GLM-5.3-Flash via OpenRouter
+  (commit 6013500). Intermediate model evaluations during development are
+  intentionally not enumerated in this public report.
 - Бюджеты токенов outline и section повышены до 16000 — требуется из-за
   reasoning-вывода модели.
 - Живой прогон на `demo/input` прерван владельцем на Stage 7; цифры
@@ -433,8 +432,8 @@ $ grep -rniE "deepseek" . --exclude-dir=.git
 ./ARCHITECTURE.md:95
 ```
 
-Итог: в коде и `.env.example` DeepSeek уже нет (там OpenRouter:
-`GENERATOR_MODEL=openai/gpt-4o-mini`, `QC_MODEL=z-ai/glm-5.3-flash`);
+Итог: в коде и `.env.example` DeepSeek уже нет (двухпровайдерная конфигурация
+`GENERATOR_MODEL`/`QC_MODEL`; финальные модели зафиксированы в K10);
 упоминания остались только в документации, включая исторический audit-отчёт.
 `ARCHITECTURE.md:95`, `docs/limitations.md:10`, `SECURITY.md:8/26`,
 `docs/project-structure.md:13` — устаревшие утверждения, требуют правки в
@@ -627,7 +626,7 @@ Required test coverage of 80% reached. Total coverage: 91.33%
 ## K7. Гигиена отчёта и CHANGELOG
 
 - Коммит: этот коммит (SHA определяется после `git commit`).
-- Статус: **IN PROGRESS**.
+- Статус: **VERIFIED**.
 - Изменённые файлы: `docs/reports/portfolio-audit-report.md`, `CHANGELOG.md`.
 - Ключевые команды и сырой вывод:
 
@@ -660,3 +659,54 @@ $ grep -nE "DEEPSEEK_API_KE[Y]" docs/reports/portfolio-audit-report.md
 **NOT VERIFIED:**
 - Live CI checks (validate, modularity, security) — owner to verify after PR open
 - K5 skipped (optional, D4)
+
+## K10. Финализация демо на DeepSeek V4.1 Flash
+
+- Дата: 2026-11-01
+- Ветка: `chore/publication-fixes`
+- Коммит кода контрольного прогона: `6013500`
+- Генератор: DeepSeek V4.1 Flash (`deepseek-flash`, DeepSeek direct API)
+- QC: GLM-5.3-Flash (OpenRouter)
+- Датасет: Northwind (`demo/input/`), synthetic English brief
+
+### K10.1 Метрики контрольного веб-прогона
+
+| Метрика | Значение |
+| --- | --- |
+| Draft Quality Score | 76/100 |
+| Final Quality Score | 84/100 |
+| Score Improvement | +8 |
+| Draft Issues | 12 (HIGH: 5, MEDIUM: 7, LOW: 0) |
+| Final Issues | 12 (HIGH: 2, MEDIUM: 6, LOW: 4) |
+| Draft Issues No Longer Reported | 12/12 (100%) |
+| Sections Improved | 6 |
+
+Артефакты прогона: `output/QC_Report.md`, `output/Final_Report.docx`;
+публичные копии — `demo/expected/`.
+
+### K10.2 Изменённые файлы
+
+- `demo/expected/QC_Report.md`, `demo/expected/Final_Report.docx` — скопированы из `output/`.
+- `README.md` — Demo Results (76→84, +8), скриншоты, Data & Privacy, Tech Stack/Configuration.
+- `demo/README.md` — блок Last updated/Models/Dataset.
+- `docs/assets/demo_main_screen.png`, `docs/assets/demo_qc_report.png`,
+  `docs/assets/demo_draft_issues.png` — обновлены владельцем.
+- `docs/pipeline.png`, `docs/qc-report.png`, `docs/final-document.png` — удалены.
+- `SECURITY.md`, `docs/limitations.md` — два внешних провайдера.
+- `CHANGELOG.md` — финальная конфигурация моделей и регенерация демо.
+- `docs/reports/portfolio-audit-report.md` — K7 VERIFIED, раздел K10,
+  консолидация отклонений.
+- `input/*.md` — восстановлены (`git checkout -- input/`) после веб-загрузок;
+  содержимое совпадает с HEAD.
+
+### K10.3 Статус проверок
+
+- `pytest -m "not live" -q` — зелёный.
+- `ruff check .` — `All checks passed!`.
+- `python -m compileall -q src tests run_pipeline.py app.py` — exit 0.
+- Сравнение таблицы README с `demo/expected/QC_Report.md` по 7 метрикам — `ALL_MATCH`.
+- `grep -rniE "gpt-4o-mini|deepseek-v4-flash|deepseek/deepseek" README.md CHANGELOG.md demo/README.md` — пусто.
+- `ls -la docs/assets` — три PNG, непустые.
+- `git status` — только файлы из Allowed (PRC-05).
+
+Статус K10: **VERIFIED** (offline); live CI проверяет владелец после push.

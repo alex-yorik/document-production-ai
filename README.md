@@ -37,7 +37,7 @@ does not blindly approve its own output.
 6. **Revision Loop** — sections with HIGH issues are regenerated (max 1 extra QC pass)
 7. **Document Assembly** — styled DOCX + QC report
 
-The system uses two different LLMs: DeepSeek V4 Flash for document generation and
+The system uses two different LLMs: DeepSeek V4.1 Flash for document generation and
 GLM-5.3-Flash for quality control review. This separation reduces self-review
 bias; it does not guarantee objective or correct review.
 
@@ -89,7 +89,7 @@ QC has two parts:
 1. **LLM reviewer** — checks every section for traceability to the sources,
    unsupported forecasts and derived calculations, and tone/structure. It
    returns issues graded HIGH / MEDIUM / LOW and an overall score (0–100).
-   QC uses a DIFFERENT LLM (GLM 5.3 Flash) than the generator (DeepSeek V4 Flash)
+   QC uses a DIFFERENT LLM (GLM 5.3 Flash) than the generator (DeepSeek V4.1 Flash)
    to reduce self-review bias; it does not guarantee objective or correct review.
 2. **Deterministic numeric check** (`_check_numeric_traceability`) — scans every
    numeric token in every section and flags tokens that do not occur in the
@@ -100,23 +100,23 @@ hallucinations; remaining issues are reported for human review.
 
 ### Demo Results
 
-**Dataset:** Northwind (demo/input/), synthetic English-language brief  
-**Models (demo run, pre-switch):** GPT-4o-mini (generator), GLM-5.3-Flash (QC)  
-**Date:** 2026-11-01 | **Commit:** dce0bdc
-
-*Demo run performed on GPT-4o-mini; the current generator is DeepSeek V4 Flash (cost-effective alternative).*
+**Dataset:** Northwind (demo/input/), synthetic English brief  
+**Models:** DeepSeek V4.1 Flash (`deepseek-flash`, DeepSeek direct API) — generator; GLM-5.3-Flash (OpenRouter) — QC  
+**Date:** 2026-11-01 | **Commit:** 6013500
 
 | Metric | Value |
 |--------|-------|
-| Draft Quality Score | 62/100 |
-| Final Quality Score | 72/100 |
-| Score Improvement | +10 |
-| Draft Issues | 10 (HIGH: 4, MEDIUM: 5, LOW: 1) |
-| Final Issues | 10 (HIGH: 1, MEDIUM: 8, LOW: 1) |
-| Draft Issues No Longer Reported | 10/10 (100%) |
-| Sections Improved | 4 |
+| Draft Quality Score | 76/100 |
+| Final Quality Score | 84/100 |
+| Score Improvement | +8 |
+| Draft Issues | 12 (HIGH: 5, MEDIUM: 7, LOW: 0) |
+| Final Issues | 12 (HIGH: 2, MEDIUM: 6, LOW: 4) |
+| Draft Issues No Longer Reported | 12/12 (**100%**) |
+| Sections Improved | 6 |
 
 *One run, one synthetic dataset, not a benchmark.*
+
+*Results vary between runs: score improvement ranged +8…+16 across observed runs on this dataset; the table records one run.*
 
 *An issue counts as "no longer reported" also when it was rephrased or downgraded; this is not a semantic verification.*
 
@@ -261,7 +261,7 @@ streamlit run app.py
 - upload 3–5 source documents through the browser; all three required files
   (`company_brief.md`, `market_data.md`, `methodology.md`) must be included, and
   up to two extra `.md`/`.txt` files are used for retrieval only
-- before/after metrics (draft score, final score, resolved issues) in the interface
+- before/after metrics (draft score, final score, Draft Issues No Longer Reported) in the interface
 - download `Final_Report.docx` and `QC_Report.md` with one button
 
 > **WARNING: THE WEB UI OVERWRITES MARKDOWN/TEXT FILES IN `input/` WHEN YOU UPLOAD FILES.**
@@ -289,7 +289,8 @@ tab on 2026-10-31.
 - An issue counts as resolved also when it was rephrased or downgraded in
   severity; there is no semantic verification of the fix.
 - Retrieval is a matching-word counter over chunks, not embeddings.
-- One LLM provider (OpenRouter) is used; there is no provider fallback.
+- Two external providers (DeepSeek for generation, OpenRouter for QC) are used;
+  there is no provider fallback.
 - There is no authentication and no multi-user support.
 - Document quality depends on the quality of the supplied sources.
 
@@ -302,9 +303,9 @@ human-in-the-loop review — see [docs/roadmap.md](docs/roadmap.md).
 
 ## Data & Privacy
 
-Document text and fragments of the source documents are sent to the OpenRouter
-API (model `deepseek/deepseek-v4-flash`) for generation and review. Do not upload personal, confidential, or
-regulated data. Using real data requires informed consent, a data retention
+Document text and fragments of the source documents are sent to two external
+providers: the DeepSeek API (generator) and the OpenRouter API (QC reviewer).
+Do not upload personal, confidential, or regulated data. Using real data requires informed consent, a data retention
 policy, and a review of the applicable local legislation. No regulatory
 compliance is claimed.
 

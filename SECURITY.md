@@ -4,10 +4,11 @@ Internal overview prepared with AI assistance. Not an independent audit.
 
 ## Threat model
 
-The pipeline is designed for local, single-user use. The main asset is the
-OpenRouter API key, which is read from a project-local `.env` file or from the
-environment. The process runs on the operator's machine and writes reports to
-`output/` and intermediate state to `project_state/`.
+The pipeline is designed for local, single-user use. The main assets are the
+DeepSeek API key (generator) and the OpenRouter API key (QC reviewer), which are
+read from a project-local `.env` file or from the environment. The process runs
+on the operator's machine and writes reports to `output/` and intermediate state
+to `project_state/`.
 
 ## What is protected
 
@@ -23,8 +24,9 @@ environment. The process runs on the operator's machine and writes reports to
 
 - The Streamlit UI has no authentication, no user accounts, and no access
   control.
-- Document text and source fragments are sent to the external OpenRouter API.
-  There is no on-premise mode and no local model.
+- Document text and source fragments are sent to two external providers: the
+  DeepSeek API (generation) and the OpenRouter API (QC review). There is no
+  on-premise mode and no local model.
 - Source documents are passed to the LLM as data and are not sanitised;
   instructions embedded in a source document can influence the generated text
   and the QC review. Treat uploaded documents as untrusted.
