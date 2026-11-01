@@ -37,7 +37,7 @@ does not blindly approve its own output.
 6. **Revision Loop** — sections with HIGH issues are regenerated (max 1 extra QC pass)
 7. **Document Assembly** — styled DOCX + QC report
 
-The system uses two different LLMs: GPT-4o-mini for document generation and
+The system uses two different LLMs: DeepSeek V4 Flash for document generation and
 GLM-5.3-Flash for quality control review. This separation reduces self-review
 bias; it does not guarantee objective or correct review.
 
@@ -89,7 +89,7 @@ QC has two parts:
 1. **LLM reviewer** — checks every section for traceability to the sources,
    unsupported forecasts and derived calculations, and tone/structure. It
    returns issues graded HIGH / MEDIUM / LOW and an overall score (0–100).
-   QC uses a DIFFERENT LLM (GLM 5.3 Flash) than the generator (GPT-4o-mini)
+   QC uses a DIFFERENT LLM (GLM 5.3 Flash) than the generator (DeepSeek V4 Flash)
    to reduce self-review bias; it does not guarantee objective or correct review.
 2. **Deterministic numeric check** (`_check_numeric_traceability`) — scans every
    numeric token in every section and flags tokens that do not occur in the
@@ -101,7 +101,7 @@ hallucinations; remaining issues are reported for human review.
 ### Demo Results
 
 **Dataset:** Northwind (demo/input/), synthetic English-language brief  
-**Models:** GPT-4o-mini (generator), GLM-5.3-Flash (QC)  
+**Models (demo run, pre-switch):** GPT-4o-mini (generator), GLM-5.3-Flash (QC)  
 **Date:** 2026-11-01 | **Commit:** dce0bdc
 
 | Metric | Value |
@@ -160,7 +160,7 @@ brief). All companies and figures are fictional; none are real.
 ## Tech Stack
 
 - Python 3.12
-- OpenRouter (LLM: `openai/gpt-4o-mini` generator, `z-ai/glm-5.3-flash` QC)
+- OpenRouter (LLM: `deepseek/deepseek-v4-flash` generator, `z-ai/glm-5.3-flash` QC)
 - python-docx (DOCX assembly)
 - Streamlit (optional web UI)
 - python-dotenv
@@ -197,10 +197,10 @@ files are optional: they are ingested and used for retrieval only.
 Copy `.env.example` to `.env` and set both API keys:
 
 ```bash
-# Generator: GPT-4o-mini (OpenAI via OpenRouter)
+# Generator: DeepSeek V4 Flash (via OpenRouter)
 GENERATOR_API_KEY=your_openrouter_api_key_here
 GENERATOR_BASE_URL=https://openrouter.ai/api/v1
-GENERATOR_MODEL=openai/gpt-4o-mini
+GENERATOR_MODEL=deepseek/deepseek-v4-flash
 
 # QC Reviewer: GLM 5.3 Flash (Zhipu AI via OpenRouter)
 QC_API_KEY=your_openrouter_api_key_here
@@ -210,7 +210,7 @@ QC_MODEL=z-ai/glm-5.3-flash
 
 ### Dual-LLM Architecture
 
-- **Generator:** GPT-4o-mini (OpenAI via OpenRouter) — outline, sections, revision.
+- **Generator:** DeepSeek V4 Flash (via OpenRouter) — outline, sections, revision.
 - **QC Reviewer:** GLM 5.3 Flash (Zhipu AI via OpenRouter) — separate review model.
 
 Using a different model for QC reduces self-review bias: the generator is less
@@ -299,7 +299,7 @@ human-in-the-loop review — see [docs/roadmap.md](docs/roadmap.md).
 ## Data & Privacy
 
 Document text and fragments of the source documents are sent to the OpenRouter
-API (model `openai/gpt-4o-mini`) for generation and review. Do not upload personal, confidential, or
+API (model `deepseek/deepseek-v4-flash`) for generation and review. Do not upload personal, confidential, or
 regulated data. Using real data requires informed consent, a data retention
 policy, and a review of the applicable local legislation. No regulatory
 compliance is claimed.

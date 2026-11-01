@@ -10,7 +10,7 @@ import requests
 from dotenv import load_dotenv
 
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
-DEFAULT_GENERATOR_MODEL = "openai/gpt-4o-mini"
+DEFAULT_GENERATOR_MODEL = "deepseek/deepseek-v4-flash"
 DEFAULT_QC_MODEL = "z-ai/glm-5.3-flash"
 DEFAULT_MODEL_NAME = DEFAULT_GENERATOR_MODEL
 CONFIG_GENERATOR = "generator"
