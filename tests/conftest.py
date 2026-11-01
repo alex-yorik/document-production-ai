@@ -8,13 +8,23 @@ import pytest
 import run_pipeline
 import src.document_assembler as document_assembler
 import src.ingestion as ingestion
+import src.llm_client as llm_client
 import src.outline_generator as outline_generator
 import src.qc_reviewer as qc_reviewer
 import src.retrieval as retrieval
 import src.revision_loop as revision_loop
 import src.section_generator as section_generator
+import src.utils as utils
 
 DEMO_INPUT_DIR = Path(__file__).resolve().parent.parent / "demo" / "input"
+
+
+@pytest.fixture(autouse=True)
+def isolate_dotenv(monkeypatch) -> None:
+    """Stop a project-local .env from overriding environment variables set by tests."""
+    for module in (llm_client, utils):
+        monkeypatch.setattr(module, "load_dotenv", lambda *args, **kwargs: None)
+
 
 OUTLINE = {
     "outline": [
@@ -91,7 +101,8 @@ class FakeClient:
         temperature: float = 0.0,
         max_tokens: int = 2000,
     ) -> dict:
-        if max_tokens <= 1500:
+        content = "\n".join(message.get("content", "") for message in messages)
+        if "structured outline" in content:
             return copy.deepcopy(OUTLINE)
         if self.qc_raises:
             raise RuntimeError("QC service unavailable")

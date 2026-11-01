@@ -266,7 +266,7 @@ streamlit run app.py
 
 ## Tests & CI
 
-16 test files, 109 test functions; last full run: 125 passed (parametrized cases included), 4 failed (local `.env` overrides monkeypatch — known isolation defect, not a code issue); coverage 91.21% (packages `src/` and `run_pipeline.py`; the Streamlit UI `app.py` is outside the coverage gate, see TECH_DEBT).
+16 test files, 120 test functions; last full run: 135 passed (parametrized cases included); coverage 91.33% (packages `src/` and `run_pipeline.py`; the Streamlit UI `app.py` is outside the coverage gate, see TECH_DEBT).
 
 Run offline tests locally with:
 
