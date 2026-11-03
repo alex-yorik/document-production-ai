@@ -278,6 +278,31 @@ on every push and pull request.
 Required checks: `validate`, `modularity`, `security` — verified in the Actions
 tab on 2026-10-31.
 
+## Development
+
+The repository ships a [`mise`](https://mise.jdx.dev/) configuration as the
+single entry point for tools and tasks. Install it once:
+
+```bash
+curl https://mise.run | sh
+```
+
+Then install the pinned tools and run a task:
+
+```bash
+mise install
+mise run serve      # Streamlit UI with .env loaded into a clean process environment
+mise run test       # offline tests, no .env
+mise run lint       # ruff check + format check
+mise run security   # bandit
+mise run docs       # documentation consistency gate
+mise run ci-local   # test + lint + security + docs
+```
+
+`serve` sources `.env` inside a subshell and `exec`s Streamlit, so variables
+from the parent shell cannot leak into the process. The other tasks do not load
+`.env`: tests run without secrets and require no network.
+
 ## Limitations
 
 - An issue counts as resolved also when it was rephrased or downgraded in
