@@ -1,0 +1,28 @@
+[tools]
+python = "system"
+"pypi:ruff" = "0.16.1"
+"pypi:bandit" = "1.9.4"
+
+[tasks.serve]
+description = "Run the Streamlit UI with a clean environment sourced from .env"
+run = "bash -c 'set -a; . ./.env; set +a; exec streamlit run app.py --server.port 8501 --server.address 0.0.0.0'"
+
+[tasks.test]
+description = "Run offline tests without loading .env"
+run = "python -m pytest -m 'not live' -q"
+
+[tasks.lint]
+description = "Check lint and formatting"
+run = "ruff check . && ruff format --check ."
+
+[tasks.security]
+description = "Run bandit over the application code"
+run = "bandit -r src run_pipeline.py app.py -ll -q"
+
+[tasks.docs]
+description = "Check documentation consistency"
+run = "python scripts/check_docs_consistency.py"
+
+[tasks.ci-local]
+description = "Run the full local CI gate"
+depends = ["test", "lint", "security", "docs"]
